@@ -38,3 +38,11 @@ func TestDocOptions(t *testing.T) {
 	assert.Equal(t, doc.clientId, clientId)
 	assert.Equal(t, doc.collectionId, "dummy")
 }
+
+func TestDocGetMap(t *testing.T) {
+	doc := newDoc()
+
+	p := doc.GetMap("project")
+	assert.Equal(t, doc.share["project"], p)
+	assert.Equal(t, p.doc, doc)
+}

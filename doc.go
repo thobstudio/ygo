@@ -13,6 +13,7 @@ type Doc struct {
 	collectionId string
 	autoLoad     bool
 	shouldLoad   bool
+	share        map[string]DocIntegrator
 }
 
 type Option func(*Doc)
@@ -24,6 +25,7 @@ func newDoc(options ...Option) *Doc {
 		gc:         true,
 		guid:       uuid.NewString(),
 		clientId:   rand.Uint32(),
+		share:      make(map[string]DocIntegrator, 0),
 	}
 
 	for _, o := range options {
@@ -71,4 +73,16 @@ func WithShouldLoad(shouldLoad bool) Option {
 	return func(doc *Doc) {
 		doc.shouldLoad = shouldLoad
 	}
+}
+
+func (doc *Doc) GetMap(name string) *YMap {
+	if m, ok := doc.share[name].(*YMap); ok {
+		return m
+	}
+
+	m := newYMap()
+	m.integrate(doc)
+	doc.share[name] = m
+
+	return m
 }
