@@ -17,6 +17,7 @@ func NewYMap() *YMap {
 	return newYMap()
 }
 
-func (m *YMap) integrate(doc *Doc) {
-	m.AbstractType.integrate(doc)
+func (m *YMap) integrate(doc *Doc, item *Item) {
+	m.doc = doc
+	m.item = item
 }
