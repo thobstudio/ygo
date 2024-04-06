@@ -1,7 +1,12 @@
 package ynotgo
 
 type YMap struct {
-	AbstractType
+	doc           *Doc
+	length        uint32
+	item          *Item
+	start         *Item
+	itemMap       map[string]*Item
+	prelimContent map[string]interface{}
 }
 
 func newYMap() *YMap {
