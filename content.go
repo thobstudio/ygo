@@ -3,6 +3,6 @@ package ynotgo
 type Content interface {
 	Content() []any
 	Countable() bool
-	Length() uint32
+	Length() int
 	Delete(tx *Transaction)
 }
