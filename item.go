@@ -40,3 +40,17 @@ func newItem(
 	}
 }
 
+func (item *Item) Deleted() bool {
+	// BIT3 is bitmask for deleted
+	return item.info&BIT3 > 0
+}
+
+func (item *Item) SetDeleted(doDelete bool) {
+	if item.Deleted() != doDelete {
+		item.info ^= BIT3
+	}
+}
+
+func (item *Item) markDeleted() {
+	item.info |= BIT3
+}
