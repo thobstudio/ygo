@@ -1,5 +1,5 @@
 package ynotgo
 
 type DocIntegrator interface {
-	integrate(doc *Doc)
+	integrate(doc *Doc, item *Item)
 }

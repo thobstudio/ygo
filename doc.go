@@ -83,7 +83,7 @@ func (doc *Doc) GetMap(name string) *YMap {
 	}
 
 	m := newYMap()
-	m.integrate(doc)
+	m.integrate(doc, nil)
 	doc.share[name] = m
 
 	return m
