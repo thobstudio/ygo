@@ -6,13 +6,13 @@ type PendingStructs struct {
 }
 
 type StructStore struct {
-	clients        map[uint32]interface{}
+	clients        map[uint32][]interface{}
 	pendingStructs *PendingStructs
 	pendingDs      []byte
 }
 
 func newStructStore() *StructStore {
 	return &StructStore{
-		clients: make(map[uint32]interface{}, 0),
+		clients: make(map[uint32][]interface{}, 0),
 	}
 }
