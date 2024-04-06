@@ -5,6 +5,13 @@ type DeleteItem struct {
 	length uint32
 }
 
+func newDeleteItem(clock uint32, length uint32) *DeleteItem {
+	return &DeleteItem{
+		clock:  clock,
+		length: length,
+	}
+}
+
 type DeleteSet struct {
 	clients map[uint32][]*DeleteItem
 }
