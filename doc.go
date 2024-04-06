@@ -14,6 +14,7 @@ type Doc struct {
 	autoLoad     bool
 	shouldLoad   bool
 	share        map[string]DocIntegrator
+	store               *StructStore
 }
 
 type Option func(*Doc)
@@ -26,6 +27,7 @@ func newDoc(options ...Option) *Doc {
 		guid:       uuid.NewString(),
 		clientId:   rand.Uint32(),
 		share:      make(map[string]DocIntegrator, 0),
+		store:               newStructStore(),
 	}
 
 	for _, o := range options {
