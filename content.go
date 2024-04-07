@@ -5,4 +5,5 @@ type Content interface {
 	Countable() bool
 	Length() int
 	Delete(tx *Transaction)
+	integrate(tx *Transaction, item *Item) error
 }
