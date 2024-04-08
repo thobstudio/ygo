@@ -40,6 +40,10 @@ func newItem(
 	}
 }
 
+func (item *Item) Countable() bool {
+	return item.info&BIT2 > 0
+}
+
 func (item *Item) Deleted() bool {
 	// BIT3 is bitmask for deleted
 	return item.info&BIT3 > 0
