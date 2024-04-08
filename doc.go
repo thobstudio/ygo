@@ -7,28 +7,31 @@ import (
 )
 
 type Doc struct {
-	gc           bool
-	guid         string
-	clientId     uint32
-	collectionId string
-	autoLoad     bool
-	shouldLoad   bool
-	share        map[string]SharedType
-	store        *StructStore
-	item         *Item
+	gc                  bool
+	guid                string
+	clientId            uint32
+	collectionId        string
+	autoLoad            bool
+	shouldLoad          bool
+	share               map[string]SharedType
+	store               *StructStore
+	item                *Item
+	transaction         *Transaction
+	transactionCleanups []*Transaction
 }
 
 type Option func(*Doc)
 
 func newDoc(options ...Option) *Doc {
 	doc := &Doc{
-		autoLoad:   false,
-		shouldLoad: true,
-		gc:         true,
-		guid:       uuid.NewString(),
-		clientId:   rand.Uint32(),
-		share:      make(map[string]SharedType, 0),
-		store:      newStructStore(),
+		autoLoad:            false,
+		shouldLoad:          true,
+		gc:                  true,
+		guid:                uuid.NewString(),
+		clientId:            rand.Uint32(),
+		share:               make(map[string]SharedType),
+		store:               newStructStore(),
+		transactionCleanups: make([]*Transaction, 0),
 	}
 
 	for _, o := range options {
