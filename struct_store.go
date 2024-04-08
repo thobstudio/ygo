@@ -57,3 +57,26 @@ func (store *StructStore) StateVector() StateVector {
 
 	return sm
 }
+func (store *StructStore) AddItemOrGc(item any) error {
+	sid, _, err := getIdAndLength(item)
+	if err != nil {
+		return err
+	}
+	structs, ok := store.clients[sid.client]
+	if !ok {
+		store.clients[sid.client] = make([]any, 0)
+	} else {
+		lsid, lslen, err := getIdAndLength(structs[len(structs)-1])
+		if err != nil {
+			return err
+		}
+
+		if lsid.clock+lslen != sid.clock {
+			return errors.New("unexpected case")
+		}
+	}
+
+	store.clients[sid.client] = append(store.clients[sid.client], item)
+
+	return nil
+}
