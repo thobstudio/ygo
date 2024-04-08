@@ -1,9 +1,15 @@
 package ynotgo
 
 type Content interface {
+	Length() int
 	Content() []any
 	Countable() bool
-	Length() int
+	Copy() Content
+	Splice(offset uint32) (Content, error)
+	MergeWith(right Content) (bool, error)
+	Integrate(tx *Transaction, item *Item)
 	Delete(tx *Transaction)
-	integrate(tx *Transaction, item *Item) error
+	Gc(store *StructStore)
+	Write()
+	Ref() uint8
 }
