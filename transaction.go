@@ -32,4 +32,3 @@ func NewTrasaction(doc *Doc, origin interface{}, local bool) *Transaction {
 }
 
 type TransactionHandler func(tx *Transaction) (interface{}, error)
-

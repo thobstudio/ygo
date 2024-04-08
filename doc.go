@@ -13,7 +13,7 @@ type Doc struct {
 	collectionId string
 	autoLoad     bool
 	shouldLoad   bool
-	share        map[string]DocIntegrator
+	share        map[string]AbstractType
 	store        *StructStore
 }
 
@@ -26,7 +26,7 @@ func newDoc(options ...Option) *Doc {
 		gc:         true,
 		guid:       uuid.NewString(),
 		clientId:   rand.Uint32(),
-		share:      make(map[string]DocIntegrator, 0),
+		share:      make(map[string]AbstractType, 0),
 		store:      newStructStore(),
 	}
 
@@ -83,7 +83,7 @@ func (doc *Doc) GetMap(name string) *YMap {
 	}
 
 	m := newYMap()
-	m.integrate(doc, nil)
+	m.Integrate(doc, nil)
 	doc.share[name] = m
 
 	return m

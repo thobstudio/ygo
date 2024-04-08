@@ -17,7 +17,7 @@ func NewYMap() *YMap {
 	return newYMap()
 }
 
-func (m *YMap) integrate(doc *Doc, item *Item) {
+func (m *YMap) Integrate(doc *Doc, item *Item) {
 	m.doc = doc
 	m.item = item
 }
@@ -39,4 +39,3 @@ func (m *YMap) Get(key string) interface{} {
 	}
 	return nil
 }
-
