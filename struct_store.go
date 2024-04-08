@@ -1,6 +1,8 @@
 package ynotgo
 
-import "errors"
+import (
+	"errors"
+)
 
 type StateVector map[uint32]uint32
 
@@ -30,6 +32,17 @@ func getIdAndLength(s interface{}) (*ID, uint32, error) {
 	default:
 		return nil, 0, errors.New("unsupported type")
 	}
+}
+
+func (store *StructStore) State(client uint32) uint32 {
+	if structs, ok := store.clients[client]; ok {
+		sid, slen, err := getIdAndLength(structs[len(structs)-1])
+		if err != nil {
+			return 0
+		}
+		return sid.clock + slen
+	}
+	return 0
 }
 
 func (store *StructStore) StateVector() StateVector {
