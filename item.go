@@ -54,3 +54,10 @@ func (item *Item) SetDeleted(doDelete bool) {
 func (item *Item) markDeleted() {
 	item.info |= BIT3
 }
+func (item *Item) LastId() *ID {
+	if item.length == 1 {
+		return item.id
+	}
+
+	return newId(item.id.client, item.id.clock+item.length-1)
+}
