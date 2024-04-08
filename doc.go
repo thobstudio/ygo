@@ -13,8 +13,9 @@ type Doc struct {
 	collectionId string
 	autoLoad     bool
 	shouldLoad   bool
-	share        map[string]AbstractType
+	share        map[string]SharedType
 	store        *StructStore
+	item         *Item
 }
 
 type Option func(*Doc)
@@ -26,7 +27,7 @@ func newDoc(options ...Option) *Doc {
 		gc:         true,
 		guid:       uuid.NewString(),
 		clientId:   rand.Uint32(),
-		share:      make(map[string]AbstractType, 0),
+		share:      make(map[string]SharedType, 0),
 		store:      newStructStore(),
 	}
 
