@@ -1,11 +1,7 @@
 package ynotgo
 
 type YMap struct {
-	doc           *Doc
-	length        uint32
-	item          *Item
-	start         *Item
-	itemMap       map[string]*Item
+	AbstractType
 	prelimContent map[string]interface{}
 }
 
