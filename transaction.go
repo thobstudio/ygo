@@ -35,3 +35,16 @@ func NewTrasaction(doc *Doc, origin interface{}, local bool) *Transaction {
 }
 
 type TransactionHandler func(tx *Transaction) (interface{}, error)
+func (tx *Transaction) AddChangedType(t SharedType, parentSub string) {
+	item := t.Item()
+	beforeStateClock, ok := tx.beforeState[item.id.client]
+	if !ok {
+		beforeStateClock = 0
+	}
+	if item == nil || ((item.id.clock < beforeStateClock) && !item.Deleted()) {
+		if _, ok := tx.changed[t]; !ok {
+			tx.changed[t] = make(map[string]bool)
+		}
+		tx.changed[t][parentSub] = true
+	}
+}
