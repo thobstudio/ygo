@@ -1,4 +1,4 @@
-module github.com/thob/ynotgo
+module github.com/thobstudio/ynotgo
 
 go 1.21.5
 
