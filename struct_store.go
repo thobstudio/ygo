@@ -2,6 +2,7 @@ package ynotgo
 
 import (
 	"errors"
+	"math"
 )
 
 type StateVector map[uint32]uint32
@@ -12,71 +13,71 @@ type PendingStructs struct {
 }
 
 type StructStore struct {
-	clients        map[uint32][]interface{}
+	clients        map[uint32][]SharedStruct
 	pendingStructs *PendingStructs
 	pendingDs      []byte
 }
 
 func newStructStore() *StructStore {
 	return &StructStore{
-		clients: make(map[uint32][]interface{}, 0),
-	}
-}
-
-func getIdAndLength(s interface{}) (*ID, uint32, error) {
-	switch t := s.(type) {
-	case *Item:
-		return t.id, t.length, nil
-	case *Gc:
-		return t.id, t.length, nil
-	default:
-		return nil, 0, errors.New("unsupported type")
+		clients: make(map[uint32][]SharedStruct, 0),
 	}
 }
 
 func (store *StructStore) State(client uint32) uint32 {
 	if structs, ok := store.clients[client]; ok {
-		sid, slen, err := getIdAndLength(structs[len(structs)-1])
-		if err != nil {
-			return 0
-		}
-		return sid.clock + slen
+		lastStruct := structs[len(structs)-1]
+		return lastStruct.Id().clock + lastStruct.Length()
 	}
 	return 0
 }
 
 func (store *StructStore) StateVector() StateVector {
 	sm := make(StateVector, 0)
-	for client, items := range store.clients {
-		s := items[len(items)-1]
-		sId, sLen, err := getIdAndLength(s)
-		if err != nil {
-			sm[client] = sId.clock + sLen
-		}
+	for client, structs := range store.clients {
+		structItem := structs[len(structs)-1]
+		sm[client] = structItem.Id().clock + structItem.Length()
 	}
 
 	return sm
 }
-func (store *StructStore) AddItemOrGc(item any) error {
-	sid, _, err := getIdAndLength(item)
-	if err != nil {
-		return err
-	}
-	structs, ok := store.clients[sid.client]
-	if !ok {
-		store.clients[sid.client] = make([]any, 0)
-	} else {
-		lsid, lslen, err := getIdAndLength(structs[len(structs)-1])
-		if err != nil {
-			return err
-		}
 
-		if lsid.clock+lslen != sid.clock {
+func (store *StructStore) AddStructItem(item SharedStruct) error {
+	structs, ok := store.clients[item.Id().client]
+	if !ok {
+		structs = make([]SharedStruct, 0)
+	} else {
+		lastStruct := structs[len(structs)-1]
+		if lastStruct.Id().clock+lastStruct.Length() != item.Id().clock {
 			return errors.New("unexpected case")
 		}
 	}
-
-	store.clients[sid.client] = append(store.clients[sid.client], item)
-
+	structs = append(structs, item)
+	store.clients[item.Id().client] = structs
 	return nil
+}
+
+func findIndexSS(structs []SharedStruct, clock uint32) (uint32, error) {
+	left := uint32(0)
+	right := uint32(len(structs) - 1)
+	mid := structs[right]
+	if mid.Id().clock == clock {
+		return right, nil
+	}
+
+	midindex := uint32(math.Floor(float64((clock / (mid.Id().clock + mid.Length() - 1) / 2))))
+	for left <= right {
+		mid = structs[midindex]
+		if mid.Id().clock <= clock {
+			if clock < mid.Id().clock+mid.Length() {
+				return midindex, nil
+			}
+			left = midindex + 1
+		} else {
+			right = midindex - 1
+		}
+		midindex = uint32(math.Floor(float64((left + right) / 2)))
+	}
+
+	return 0, errors.New("unexpected case")
 }

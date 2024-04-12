@@ -40,6 +40,22 @@ func newItem(
 	}
 }
 
+func (item *Item) Id() *ID {
+	return item.id
+}
+
+func (item *Item) Length() uint32 {
+	return item.length
+}
+
+func (item *Item) MergeWith() (bool, error) {
+	return false, nil
+}
+
+func (item *Item) Integrate(tx *Transaction, offset uint32) error {
+	return nil
+}
+
 func (item *Item) Countable() bool {
 	return item.info&BIT2 > 0
 }
@@ -58,6 +74,7 @@ func (item *Item) SetDeleted(doDelete bool) {
 func (item *Item) markDeleted() {
 	item.info |= BIT3
 }
+
 func (item *Item) LastId() *ID {
 	if item.length == 1 {
 		return item.id
