@@ -2,6 +2,7 @@ package ynotgo
 
 import (
 	"errors"
+	"fmt"
 	"math"
 )
 
@@ -92,3 +93,11 @@ func findIndexSS(structs []SharedStruct, clock uint32) (uint32, error) {
 
 	return 0, errors.New("findIndexSS unexpected case")
 }
+
+func (store *StructStore) FindStructIndex(client uint32, clock uint32) (uint32, error) {
+	if structs, ok := store.clients[client]; ok {
+		return findIndexSS(structs, clock)
+	}
+	return 0, errors.New(fmt.Sprintf("FindStructIndex invalid %v client", client))
+}
+
