@@ -40,18 +40,11 @@ func (content *ContentDoc) MergeWith(right Content) (bool, error) {
 
 func (content *ContentDoc) Integrate(tx *Transaction, item *Item) {
 	content.doc.item = item
-	tx.subdocsAdded[content.doc] = true
-	if content.doc.shouldLoad {
-		tx.subdocsLoaded[content.doc] = true
-	}
+	// TODO: to be implemented
 }
 
 func (content *ContentDoc) Delete(tx *Transaction) {
-	if _, ok := tx.subdocsAdded[content.doc]; ok {
-		delete(tx.subdocsAdded, content.doc)
-	} else {
-		tx.subdocsRemoved[content.doc] = true
-	}
+	// TODO: to be implemented
 }
 
 func (content *ContentDoc) Gc(store *StructStore) {}
