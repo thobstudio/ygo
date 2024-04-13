@@ -49,7 +49,7 @@ func (store *StructStore) AddStructItem(item SharedStruct) error {
 	} else {
 		lastStruct := structs[len(structs)-1]
 		if lastStruct.Id().clock+lastStruct.Length() != item.Id().clock {
-			return errors.New("unexpected case")
+			return errors.New("AddStructItem unexpected case")
 		}
 	}
 	structs = append(structs, item)
@@ -79,5 +79,5 @@ func findIndexSS(structs []SharedStruct, clock uint32) (uint32, error) {
 		midindex = uint32(math.Floor(float64((left + right) / 2)))
 	}
 
-	return 0, errors.New("unexpected case")
+	return 0, errors.New("findIndexSS unexpected case")
 }
