@@ -4,6 +4,12 @@ type ContentDoc struct {
 	doc *Doc
 }
 
+func newContentDoc(doc *Doc) *ContentDoc {
+	return &ContentDoc{
+		doc: doc,
+	}
+}
+
 func (content *ContentDoc) Length() int {
 	return 1
 }

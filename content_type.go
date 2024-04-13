@@ -4,6 +4,12 @@ type ContentType struct {
 	contentType SharedType
 }
 
+func newContentType(contentType SharedType) *ContentType {
+	return &ContentType{
+		contentType: contentType,
+	}
+}
+
 func (content *ContentType) Length() int {
 	return 1
 }

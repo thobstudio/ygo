@@ -4,6 +4,12 @@ type ContentBinary struct {
 	content []byte
 }
 
+func newContentBinary(content []byte) *ContentBinary {
+	return &ContentBinary{
+		content: content,
+	}
+}
+
 func (content *ContentBinary) Length() int {
 	return 1
 }

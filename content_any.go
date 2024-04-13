@@ -6,6 +6,12 @@ type ContentAny struct {
 	arr []any
 }
 
+func newContentAny(arr []any) *ContentAny {
+	return &ContentAny{
+		arr: arr,
+	}
+}
+
 func (content *ContentAny) Length() int {
 	return len(content.arr)
 }
