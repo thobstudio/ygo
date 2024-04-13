@@ -24,6 +24,17 @@ func newStructStore() *StructStore {
 	}
 }
 
+func (store *StructStore) GetStructItem(client uint32, index int) SharedStruct {
+	if structs, ok := store.clients[client]; ok {
+		return structs[index]
+	}
+	return nil
+}
+
+func (store *StructStore) ClientsCount() int {
+	return len(store.clients)
+}
+
 func (store *StructStore) State(client uint32) uint32 {
 	if structs, ok := store.clients[client]; ok {
 		lastStruct := structs[len(structs)-1]
