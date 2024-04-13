@@ -2,6 +2,7 @@ package ynotgo
 
 import (
 	"cmp"
+	"math"
 	"slices"
 )
 
@@ -61,4 +62,22 @@ func (ds *DeleteSet) SortAndMerge() {
 
 		ds.clients[client] = items[:j]
 	}
+}
+
+func findIndexDeleteSet(dis []*DeleteItem, clock uint32) (uint32, bool) {
+	left := uint32(0)
+	right := uint32(len(dis) - 1)
+	for left <= right {
+		midindex := uint32(math.Floor(float64((left + right) / 2)))
+		mid := dis[midindex]
+		if mid.clock <= clock {
+			if clock < mid.clock+mid.length {
+				return midindex, true
+			}
+			left = midindex + 1
+		} else {
+			right = midindex - 1
+		}
+	}
+	return 0, false
 }
