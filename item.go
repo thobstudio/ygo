@@ -48,16 +48,12 @@ func (item *Item) Length() uint32 {
 	return item.length
 }
 
-func (item *Item) MergeWith() (bool, error) {
+func (item *Item) MergeWith(right SharedStruct) (bool, error) {
 	return false, nil
 }
 
 func (item *Item) Integrate(tx *Transaction, offset uint32) error {
 	return nil
-}
-
-func (item *Item) Countable() bool {
-	return item.info&BIT2 > 0
 }
 
 func (item *Item) Deleted() bool {
@@ -73,6 +69,10 @@ func (item *Item) SetDeleted(doDelete bool) {
 
 func (item *Item) markDeleted() {
 	item.info |= BIT3
+}
+
+func (item *Item) Countable() bool {
+	return item.info&BIT2 > 0
 }
 
 func (item *Item) LastId() *ID {
