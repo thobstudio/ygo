@@ -6,6 +6,10 @@ import (
 	"github.com/google/uuid"
 )
 
+func generateNewClientId() uint32 {
+	return rand.Uint32()
+}
+
 type Doc struct {
 	gc                  bool
 	guid                string
@@ -28,7 +32,7 @@ func newDoc(options ...Option) *Doc {
 		shouldLoad:          true,
 		gc:                  true,
 		guid:                uuid.NewString(),
-		clientId:            rand.Uint32(),
+		clientId:            generateNewClientId(),
 		share:               make(map[string]SharedType),
 		store:               newStructStore(),
 		transactionCleanups: make([]*Transaction, 0),
