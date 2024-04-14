@@ -37,6 +37,7 @@ func newItem(
 		parentSub:   parentSub,
 		content:     content,
 		info:        info,
+		length:      uint32(content.Length()),
 	}
 }
 
