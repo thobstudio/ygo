@@ -15,3 +15,7 @@ func newId(client uint32, clock uint32) *ID {
 func NewID(client uint32, clock uint32) *ID {
 	return newId(client, clock)
 }
+
+func compareIds(a *ID, b *ID) bool {
+	return a == b || a != nil && b != nil && a.client == b.client && a.clock == b.clock
+}
