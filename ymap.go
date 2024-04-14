@@ -6,7 +6,11 @@ type YMap struct {
 }
 
 func newYMap() *YMap {
-	return &YMap{}
+	return &YMap{
+		AbstractType: AbstractType{
+			itemMap: make(map[string]*Item),
+		},
+	}
 }
 
 func NewYMap() *YMap {
