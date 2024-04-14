@@ -57,6 +57,19 @@ func (item *Item) Integrate(tx *Transaction, offset uint32) error {
 	return nil
 }
 
+func (item *Item) Delete(tx *Transaction) {
+	if !item.Deleted() {
+		parent := item.parent.(SharedType)
+		if item.Countable() && item.parentSub != "" {
+			parent.SetLength(parent.Length() - item.length)
+		}
+		item.markDeleted()
+		tx.deleteSet.AddDeleteItem(item.id.client, item.id.clock, item.length)
+		tx.AddChangedType(parent, item.parentSub)
+		item.content.Delete(tx)
+	}
+}
+
 func (item *Item) Deleted() bool {
 	// BIT3 is bitmask for deleted
 	return item.info&BIT3 > 0
