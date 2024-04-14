@@ -63,17 +63,19 @@ func (store *StructStore) StateVector() StateVector {
 }
 
 func (store *StructStore) AddStructItem(item SharedStruct) error {
-	structs, ok := store.clients[item.Id().client]
+	client := item.Id().client
+	clock := item.Id().clock
+	structs, ok := store.clients[client]
 	if !ok {
 		structs = make([]SharedStruct, 0)
 	} else {
 		lastStruct := structs[len(structs)-1]
-		if lastStruct.Id().clock+lastStruct.Length() != item.Id().clock {
+		if lastStruct.Id().clock+lastStruct.Length() != clock {
 			return errors.New("AddStructItem unexpected case")
 		}
 	}
 	structs = append(structs, item)
-	store.clients[item.Id().client] = structs
+	store.clients[client] = structs
 	return nil
 }
 
