@@ -8,6 +8,7 @@ type Transaction struct {
 	changed      map[SharedType]map[string]bool // map[string]bool is like a set
 	beforeState  map[uint32]uint32
 	afterState   map[uint32]uint32
+	mergeStructs []SharedStruct
 }
 
 func newTrasaction(doc *Doc, origin interface{}, local bool) *Transaction {
@@ -19,6 +20,7 @@ func newTrasaction(doc *Doc, origin interface{}, local bool) *Transaction {
 		changed:      make(map[SharedType]map[string]bool),
 		origin:       origin,
 		local:        local,
+		mergeStructs: make([]SharedStruct, 0),
 	}
 }
 
