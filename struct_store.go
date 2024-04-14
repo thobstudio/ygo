@@ -122,3 +122,23 @@ func (store *StructStore) GetItem(id *ID) (SharedStruct, error) {
 	return nil, errors.New(fmt.Sprintf("GetItem no items for client : %v \n", id.client))
 }
 
+func (store *StructStore) ReplaceStruct(prev SharedStruct, next SharedStruct) error {
+	client := prev.Id().client
+	if structs, ok := store.clients[client]; ok {
+		index, err := findIndexSS(structs, prev.Id().clock)
+		if err != nil {
+			return err
+		}
+		structs[index] = next
+		store.clients[client] = structs
+	}
+	return nil
+}
+
+func (store *StructStore) InsertStruct(client uint32, index uint32, structItem SharedStruct) {
+	if structs, ok := store.clients[client]; ok {
+		structs = append(structs[:index+1], structs[index:]...)
+		structs[index] = structItem
+		store.clients[client] = structs
+	}
+}
