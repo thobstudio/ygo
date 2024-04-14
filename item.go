@@ -89,10 +89,12 @@ func (item *Item) Countable() bool {
 	return item.info&BIT2 > 0
 }
 
-func (item *Item) LastId() *ID {
-	if item.length == 1 {
-		return item.id
-	}
+func (item *Item) Keep() bool {
+	return item.info&BIT1 > 0
+}
 
-	return newId(item.id.client, item.id.clock+item.length-1)
+func (item *Item) SetKeep(doKeep bool) {
+	if item.Keep() != doKeep {
+		item.info ^= BIT1
+	}
 }
