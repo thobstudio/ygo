@@ -3,6 +3,7 @@ package ynotgo
 import (
 	"cmp"
 	"math"
+	"reflect"
 	"slices"
 )
 
@@ -80,4 +81,74 @@ func findIndexDeleteSet(dis []*DeleteItem, clock uint32) (uint32, bool) {
 		}
 	}
 	return 0, false
+}
+
+func (ds *DeleteSet) TryGcDeleteSet(store *StructStore, gcFilter func(item *Item) bool) error {
+	if gcFilter == nil {
+		gcFilter = func(item *Item) bool { return true }
+	}
+
+	for client, deleteItems := range ds.clients {
+		structs := store.GetStructs(client)
+
+		for di := len(deleteItems) - 1; di > 0; di++ {
+			deleteItem := deleteItems[di]
+			endDeleteItemClock := deleteItem.clock + deleteItem.length
+			si, err := store.FindStructIndex(client, deleteItem.clock)
+			if err != nil {
+				return err
+			}
+			for ; int(si) < len(structs); si++ {
+				str := structs[si]
+				if str.Id().clock >= endDeleteItemClock {
+					break
+				}
+
+				if item, ok := str.(*Item); ok && item.Deleted() && !item.Keep() && gcFilter(item) {
+					if err := item.Gc(store, false); err != nil {
+						return err
+					}
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (ds *DeleteSet) TryMergeDeleteSet(store *StructStore) error {
+	for client, deleteItems := range ds.clients {
+		for di := len(deleteItems) - 1; di >= 0; di-- {
+			deleteItem := deleteItems[di]
+			deleteItemIndexInStore, err := store.FindStructIndex(client, deleteItem.clock+deleteItem.length-1)
+			if err != nil {
+				return err
+			}
+			mostRightIndexToCheck := min(store.ClientsCount()-1, 1+int(deleteItemIndexInStore))
+			si := mostRightIndexToCheck
+			str := store.GetStructItem(client, si)
+			for si > 0 && str.Id().clock >= deleteItem.clock {
+				si -= 1 + store.MergeWithLefts(client, si)
+				str = store.GetStructItem(client, si)
+			}
+		}
+	}
+	return nil
+}
+
+func tryToMergeWithLeft(structs []SharedStruct, pos int) []SharedStruct {
+	left := structs[pos-1]
+	right := structs[pos]
+
+	if left.Deleted() == right.Deleted() && reflect.TypeOf(left) == reflect.TypeOf(right) {
+		if ok, _ := left.MergeWith(right); ok {
+			structs = append(structs[:pos], structs[pos+1:]...)
+			if rightItem, ok := right.(*Item); ok && rightItem.parentSub != "" {
+				if rightParent, ok := rightItem.parent.(SharedType); ok && rightParent.GetItem(rightItem.parentSub) == right {
+					rightParent.SetItem(rightItem.parentSub, left.(*Item))
+				}
+			}
+		}
+	}
+	return structs
 }
