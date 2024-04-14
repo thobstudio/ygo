@@ -32,6 +32,14 @@ func (store *StructStore) GetStructItem(client uint32, index int) SharedStruct {
 	return nil
 }
 
+func (store *StructStore) GetStructs(client uint32) []SharedStruct {
+	return store.clients[client]
+}
+
+func (store *StructStore) SetStructs(client uint32, structs []SharedStruct) {
+	store.clients[client] = structs
+}
+
 func (store *StructStore) ClientsCount() int {
 	return len(store.clients)
 }
