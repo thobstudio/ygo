@@ -1,5 +1,7 @@
 package ynotgo
 
+import "reflect"
+
 type Gc struct {
 	id     *ID
 	length uint32
@@ -21,10 +23,19 @@ func (item *Gc) Length() uint32 {
 }
 
 func (item *Gc) MergeWith(right SharedStruct) (bool, error) {
+	if reflect.TypeOf(item) != reflect.TypeOf(right) {
+		return false, nil
+	}
+	item.length += right.Length()
 	return false, nil
 }
 
 func (item *Gc) Integrate(tx *Transaction, offset uint32) error {
+	if offset > 0 {
+		item.id.clock += offset
+		item.length -= offset
+	}
+	tx.doc.store.AddStructItem(item)
 	return nil
 }
 
