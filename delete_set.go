@@ -40,7 +40,7 @@ func (ds *DeleteSet) AddDeleteItem(client, clock, length uint32) {
 	ds.clients[client] = append(ds.clients[client], newDeleteItem(clock, length))
 }
 
-func (ds *DeleteSet) SortAndMerge() {
+func (ds *DeleteSet) SortAndMergeDeleteSet() {
 	for client, items := range ds.clients {
 		slices.SortFunc(items, func(a *DeleteItem, b *DeleteItem) int {
 			return cmp.Compare(a.clock, b.clock)
