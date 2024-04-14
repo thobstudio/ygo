@@ -111,3 +111,14 @@ func (store *StructStore) FindStructIndex(client uint32, clock uint32) (uint32, 
 	return 0, errors.New(fmt.Sprintf("FindStructIndex invalid %v client", client))
 }
 
+func (store *StructStore) GetItem(id *ID) (SharedStruct, error) {
+	if structs, ok := store.clients[id.client]; ok {
+		index, err := findIndexSS(structs, id.clock)
+		if err != nil {
+			return nil, err
+		}
+		return structs[index], nil
+	}
+	return nil, errors.New(fmt.Sprintf("GetItem no items for client : %v \n", id.client))
+}
+
