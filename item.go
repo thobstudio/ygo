@@ -54,6 +54,19 @@ func (item *Item) MergeWith(right SharedStruct) (bool, error) {
 }
 
 func (item *Item) Integrate(tx *Transaction, offset uint32) error {
+func (item *Item) Gc(store *StructStore, parentGcd bool) error {
+	if !item.Deleted() {
+		return errors.New("Gc item not deleted yet")
+	}
+
+	item.content.Gc(store)
+	if parentGcd {
+		if err := store.ReplaceStruct(item, newGc(item.id, item.length)); err != nil {
+			return err
+		}
+	} else {
+		item.content = newContentDeleted(item.length)
+	}
 	return nil
 }
 
