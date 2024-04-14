@@ -83,6 +83,44 @@ func (item *Item) Delete(tx *Transaction) {
 	}
 }
 
+func (item *Item) SplitItem(tx *Transaction, offset uint32) *Item {
+	client := item.id.client
+	clock := item.id.clock
+	content, _ := item.content.Splice(offset)
+	rightItem := newItem(newId(client, clock+offset), item, item.right, newId(client, clock+offset-1), item.rightOrigin, item.parent, item.parentSub, content)
+
+	if item.Deleted() {
+		rightItem.markDeleted()
+	}
+
+	if item.Keep() {
+		rightItem.SetKeep(true)
+	}
+
+	item.right = rightItem
+	if rightItem.right != nil {
+		rightItem.right.left = rightItem
+	}
+
+	tx.mergeStructs = append(tx.mergeStructs, rightItem)
+
+	if rightItem.parentSub != "" && rightItem.right == nil {
+		rightItem.parent.(SharedType).SetItem(rightItem.parentSub, rightItem)
+	}
+
+	item.length = offset
+
+	return rightItem
+}
+
+func (item *Item) LastId() *ID {
+	if item.length == 1 {
+		return item.id
+	}
+
+	return newId(item.id.client, item.id.clock+item.length-1)
+}
+
 func (item *Item) Deleted() bool {
 	// BIT3 is bitmask for deleted
 	return item.info&BIT3 > 0
