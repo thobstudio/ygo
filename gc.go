@@ -5,6 +5,13 @@ type Gc struct {
 	length uint32
 }
 
+func newGc(id *ID, length uint32) *Gc {
+	return &Gc{
+		id:     id,
+		length: length,
+	}
+}
+
 func (item *Gc) Id() *ID {
 	return item.id
 }
