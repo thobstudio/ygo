@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"reflect"
 )
 
 type StateVector map[uint32]uint32
@@ -133,6 +134,26 @@ func (store *StructStore) ReplaceStruct(prev SharedStruct, next SharedStruct) er
 		store.clients[client] = structs
 	}
 	return nil
+}
+
+func (store *StructStore) GetItemCleanEnd(tx *Transaction, id *ID) (SharedStruct, error) {
+	structs, ok := store.clients[id.client]
+	if !ok {
+		return nil, errors.New("StructStore client not found")
+	}
+
+	index, err := findIndexSS(structs, id.clock)
+	if err != nil {
+		return nil, err
+	}
+
+	str := structs[index]
+
+	if id.clock != str.Id().clock+str.Length()-1 && reflect.TypeOf(str) != reflect.TypeOf(&Gc{}) {
+		store.InsertStruct(id.client, index+1, str.(*Item).SplitItem(tx, id.clock-str.Id().clock+1))
+	}
+
+	return str, nil
 }
 
 func (store *StructStore) InsertStruct(client uint32, index uint32, structItem SharedStruct) {
