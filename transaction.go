@@ -29,6 +29,7 @@ func NewTrasaction(doc *Doc, origin interface{}, local bool) *Transaction {
 }
 
 type TransactionHandler func(tx *Transaction) (interface{}, error)
+
 func (tx *Transaction) AddChangedType(t SharedType, parentSub string) {
 	item := t.Item()
 	var beforeStateClock uint32 = 0
@@ -43,4 +44,82 @@ func (tx *Transaction) AddChangedType(t SharedType, parentSub string) {
 		}
 		tx.changed[t][parentSub] = true
 	}
+}
+
+func cleanupTransactions(transactionCleanups []*Transaction, index int) error {
+	var err error
+	if index < len(transactionCleanups) {
+		tx := transactionCleanups[index]
+		doc := tx.doc
+		store := doc.store
+		ds := tx.deleteSet
+
+		ds.SortAndMergeDeleteSet()
+		tx.afterState = store.StateVector()
+		doc.transaction = nil
+
+		actions := make([]func(), 0)
+		actions = append(actions, func() {
+			//
+		})
+
+		// Run all the actions
+		for _, action := range actions {
+			action()
+		}
+
+		if doc.gc {
+			ds.TryGcDeleteSet(store, func(item *Item) bool { return true })
+		}
+
+		ds.TryMergeDeleteSet(store)
+
+		for client, clock := range tx.afterState {
+			beforeClock, ok := tx.beforeState[client]
+			if !ok {
+				beforeClock = 0
+			}
+
+			if beforeClock != clock {
+				structs := store.GetStructs(client)
+				beforeClockStructIndex, _ := findIndexSS(structs, clock)
+				firstChangePos := max(beforeClockStructIndex, 1)
+				for j := len(structs) - 1; j >= int(firstChangePos); j-- {
+					store.SetStructs(client, tryToMergeWithLeft(structs, j))
+				}
+
+			}
+		}
+
+		for i := 0; i < len(tx.mergeStructs)-1; i++ {
+			client := tx.mergeStructs[i].Id().client
+			clock := tx.mergeStructs[i].Id().clock
+			structs := store.GetStructs(client)
+			replacedStructPos, _ := findIndexSS(structs, clock)
+
+			if int(replacedStructPos)+1 < len(structs) {
+				store.SetStructs(client, tryToMergeWithLeft(structs, int(replacedStructPos)+1))
+			}
+
+			if replacedStructPos > 0 {
+				store.SetStructs(client, tryToMergeWithLeft(structs, int(replacedStructPos)))
+			}
+
+		}
+
+		if !tx.local {
+			afterClock, afterOk := tx.afterState[doc.clientId]
+			beforeClock, beforeOk := tx.beforeState[doc.clientId]
+			if afterOk && beforeOk && afterClock != beforeClock {
+				doc.clientId = generateNewClientId()
+			}
+		}
+
+		if len(transactionCleanups) <= index+1 {
+			doc.transactionCleanups = []*Transaction{}
+		} else {
+			cleanupTransactions(transactionCleanups, index+1)
+		}
+	}
+	return err
 }
