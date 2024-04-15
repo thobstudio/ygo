@@ -84,27 +84,27 @@ func cleanupTransactions(transactionCleanups []*Transaction, index int) error {
 				structs := store.GetStructs(client)
 				beforeClockStructIndex, _ := findIndexSS(structs, beforeClock)
 				firstChangePos := max(beforeClockStructIndex, 1)
-				for j := len(structs) - 1; j >= int(firstChangePos); j-- {
-					store.SetStructs(client, tryToMergeWithLeft(structs, j))
+				for i := len(structs) - 1; i >= int(firstChangePos); {
+					i -= 1 + store.MergeWithLefts(client, i)
 				}
-
 			}
 		}
 
-		for i := 0; i < len(tx.mergeStructs)-1; i++ {
-			client := tx.mergeStructs[i].Id().client
-			clock := tx.mergeStructs[i].Id().clock
+		for i := len(tx.mergeStructs) - 1; i >= 0; i-- {
+			id := tx.mergeStructs[i].Id()
+			client := id.client
+			clock := id.clock
 			structs := store.GetStructs(client)
 			replacedStructPos, _ := findIndexSS(structs, clock)
-
-			if int(replacedStructPos)+1 < len(structs) {
-				store.SetStructs(client, tryToMergeWithLeft(structs, int(replacedStructPos)+1))
+			if int(replacedStructPos+1) < len(structs) {
+				if store.MergeWithLefts(client, int(replacedStructPos)+1) > 1 {
+					continue
+				}
 			}
 
 			if replacedStructPos > 0 {
-				store.SetStructs(client, tryToMergeWithLeft(structs, int(replacedStructPos)))
+				store.MergeWithLefts(client, int(replacedStructPos))
 			}
-
 		}
 
 		if !tx.local {
