@@ -82,7 +82,7 @@ func cleanupTransactions(transactionCleanups []*Transaction, index int) error {
 
 			if beforeClock != clock {
 				structs := store.GetStructs(client)
-				beforeClockStructIndex, _ := findIndexSS(structs, clock)
+				beforeClockStructIndex, _ := findIndexSS(structs, beforeClock)
 				firstChangePos := max(beforeClockStructIndex, 1)
 				for j := len(structs) - 1; j >= int(firstChangePos); j-- {
 					store.SetStructs(client, tryToMergeWithLeft(structs, j))
