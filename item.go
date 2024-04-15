@@ -1,5 +1,9 @@
 package ynotgo
 
+import (
+	"errors"
+)
+
 type Item struct {
 	id          *ID
 	length      uint32
@@ -54,6 +58,121 @@ func (item *Item) MergeWith(right SharedStruct) (bool, error) {
 }
 
 func (item *Item) Integrate(tx *Transaction, offset uint32) error {
+	if offset > 0 {
+		item.id.clock += offset
+		left, err := tx.doc.store.GetItemCleanEnd(tx, newId(item.id.client, item.id.clock-1))
+		if err != nil {
+			return err
+		}
+		item.left = left.(*Item)
+		item.leftOrigin = item.left.LastId()
+		content, err := item.content.Splice(offset)
+		if err != nil {
+			return err
+		}
+		item.content = content
+		item.length -= offset
+	}
+
+	if item.parent != nil {
+		parent, _ := item.parent.(SharedType)
+		if (item.left == nil && (item.right == nil || item.right.left != nil)) || (item.left != nil && item.left.right != item.right) {
+			left := item.left
+
+			var o *Item
+
+			if left != nil {
+				o = left.right
+			} else if item.parentSub != "" {
+				o = item.parent.(SharedType).GetItem(item.parentSub)
+				for o != nil && o.left != nil {
+					o = o.left
+				}
+			} else {
+				o = item.parent.(SharedType).Start()
+			}
+
+			conflictingItems := make(map[*Item]bool)
+			itemsBeforeOrigin := make(map[*Item]bool)
+
+			for o != nil && o != item.right {
+				itemsBeforeOrigin[o] = true
+				conflictingItems[o] = true
+
+				if compareIds(item.leftOrigin, o.leftOrigin) {
+					if o.id.client < item.id.client {
+						left = o
+						conflictingItems = make(map[*Item]bool)
+					} else if compareIds(item.rightOrigin, o.rightOrigin) {
+						break
+					}
+				} else if o.leftOrigin != nil {
+					leftOriginItem, err := tx.doc.store.GetItem(o.leftOrigin)
+					if err != nil {
+						return err
+					}
+					if hasItemBeforeOrigin, ok := itemsBeforeOrigin[leftOriginItem.(*Item)]; ok && hasItemBeforeOrigin {
+						if hasItemConflicting, ok := conflictingItems[leftOriginItem.(*Item)]; !ok && !hasItemConflicting {
+							left = o
+							conflictingItems = make(map[*Item]bool)
+						}
+					}
+				} else {
+					break
+				}
+				o = o.right
+			}
+
+			item.left = left
+		}
+
+		if item.left != nil {
+			right := item.left.right
+			item.right = right
+			item.left.right = item
+		} else {
+			var r *Item
+			if item.parentSub != "" {
+				r = parent.GetItem(item.parentSub)
+				for r != nil && r.left != nil {
+					r = r.left
+				}
+			} else {
+				r = parent.Start()
+				parent.SetStart(item)
+			}
+
+			item.right = r
+		}
+
+		if item.right != nil {
+			item.right.left = item
+		} else if item.parentSub != "" {
+			parent.SetItem(item.parentSub, item)
+			if item.left != nil {
+				item.left.Delete(tx)
+			}
+		}
+
+		if item.parentSub == "" && item.Countable() && !item.Deleted() {
+			parent.SetLength(parent.Length() + item.length)
+		}
+
+		tx.doc.store.AddStructItem(item)
+		item.content.Integrate(tx, item)
+
+		tx.AddChangedType(item.parent.(SharedType), item.parentSub)
+
+		if parent.Item() != nil && parent.Item().Deleted() || (item.parentSub != "" && item.right != nil) {
+			item.Delete(tx)
+		}
+	} else {
+		// If parent is not defined. We need Integrate GC structs instead
+		newGc(item.id, item.length).Integrate(tx, offset)
+	}
+	return nil
+}
+
 func (item *Item) Gc(store *StructStore, parentGcd bool) error {
 	if !item.Deleted() {
 		return errors.New("Gc item not deleted yet")
