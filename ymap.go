@@ -1,5 +1,7 @@
 package ynotgo
 
+import "errors"
+
 type YMap struct {
 	AbstractType
 	prelimContent map[string]interface{}
@@ -38,6 +40,103 @@ func (m *YMap) Get(key string) interface{} {
 	}
 	return nil
 }
+
+func (m *YMap) Set(key string, value any) {
+	if m.doc != nil {
+		m.doc.Transact(func(tx *Transaction) (any, error) {
+			if err := typeMapSet(m, key, value, tx); err != nil {
+				return nil, err
+			}
+			return nil, nil
+		}, nil, true)
+	} else {
+		m.prelimContent[key] = value
+	}
+}
+
+func (m *YMap) Delete(key string) {
+	if m.doc != nil {
+		m.doc.Transact(func(tx *Transaction) (any, error) {
+			if err := typeMapDelete(m, tx, key); err != nil {
+				return nil, err
+			}
+			return nil, nil
+		}, nil, true)
+	} else {
+		delete(m.prelimContent, key)
+	}
+}
+
+func (m *YMap) Clear() {
+	if m.doc != nil {
+		m.doc.Transact(func(tx *Transaction) (any, error) {
+			for key, item := range m.itemMap {
+				if !item.Deleted() {
+					if err := typeMapDelete(m, tx, key); err != nil {
+						return nil, err
+					}
+				}
+			}
+			return nil, nil
+		}, nil, true)
+	} else {
+		m.prelimContent = make(map[string]interface{})
+	}
+}
+
+func (m *YMap) GetItem(key string) *Item {
+	return m.itemMap[key]
+}
+
+func (m *YMap) SetItem(key string, item *Item) {
+	m.itemMap[key] = item
+}
+
+func (m *YMap) Clone() SharedType {
+	return newYMap()
+}
+
+func (m *YMap) Copy() SharedType {
+	newmap := newYMap()
+	return newmap
+}
+
+func (m *YMap) Length() uint32 {
+	return m.length
+}
+
+func (m *YMap) SetLength(length uint32) {
+	m.length = length
+}
+
+func (m *YMap) Start() *Item {
+	return m.start
+}
+
+func (m *YMap) SetStart(start *Item) {
+	m.start = start
+}
+
+func (m *YMap) Integrate(doc *Doc, item *Item) {
+	m.doc = doc
+	m.item = item
+}
+
+func (m *YMap) ToJSON() any {
+	jsonmap := make(map[string]any)
+	for key, item := range m.itemMap {
+		if !item.Deleted() {
+			val := item.content.Content()[item.length-1]
+			if v, ok := val.(SharedType); ok {
+				jsonmap[key] = v.ToJSON()
+			} else {
+				jsonmap[key] = val
+			}
+		}
+	}
+	return jsonmap
+}
+
 func typeMapSet(m *YMap, key string, value any, tx *Transaction) error {
 	left := m.GetItem(key)
 	doc := tx.doc
