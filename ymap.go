@@ -17,9 +17,8 @@ func NewYMap() *YMap {
 	return newYMap()
 }
 
-func (m *YMap) Integrate(doc *Doc, item *Item) {
-	m.doc = doc
-	m.item = item
+func (m *YMap) Item() *Item {
+	return m.item
 }
 
 func (m *YMap) Has(key string) bool {
