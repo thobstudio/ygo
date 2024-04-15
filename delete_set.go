@@ -3,7 +3,6 @@ package ynotgo
 import (
 	"cmp"
 	"math"
-	"reflect"
 	"slices"
 )
 
@@ -134,21 +133,4 @@ func (ds *DeleteSet) TryMergeDeleteSet(store *StructStore) error {
 		}
 	}
 	return nil
-}
-
-func tryToMergeWithLeft(structs []SharedStruct, pos int) []SharedStruct {
-	left := structs[pos-1]
-	right := structs[pos]
-
-	if left.Deleted() == right.Deleted() && reflect.TypeOf(left) == reflect.TypeOf(right) {
-		if ok, _ := left.MergeWith(right); ok {
-			structs = append(structs[:pos], structs[pos+1:]...)
-			if rightItem, ok := right.(*Item); ok && rightItem.parentSub != "" {
-				if rightParent, ok := rightItem.parent.(SharedType); ok && rightParent.GetItem(rightItem.parentSub) == right {
-					rightParent.SetItem(rightItem.parentSub, left.(*Item))
-				}
-			}
-		}
-	}
-	return structs
 }
