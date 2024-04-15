@@ -165,5 +165,35 @@ func (store *StructStore) InsertStruct(client uint32, index uint32, structItem S
 }
 
 func (store *StructStore) MergeWithLefts(client uint32, pos int) int {
+	if structs, ok := store.clients[client]; ok {
+		right := structs[pos]
+		left := structs[pos-1]
+		i := pos
+		for i > 0 {
+			if left.Deleted() == right.Deleted() && reflect.TypeOf(left) == reflect.TypeOf(right) {
+				if ok, err := left.MergeWith(right); ok && err != nil {
+					if rightItem, ok := right.(*Item); ok && rightItem.parentSub != "" {
+						if parent, ok := rightItem.parent.(SharedType); ok {
+							if item := parent.GetItem(rightItem.parentSub); item == rightItem {
+								parent.SetItem(rightItem.parentSub, left.(*Item))
+							}
+						}
+					}
+
+					i -= 1
+					right = left
+					left = structs[i]
+					continue
+				}
+			}
+			break
+		}
+
+		merged := pos - i
+		if merged > 0 {
+			structs = structs[pos+1-merged : merged]
+		}
+		store.clients[client] = structs
+	}
 	return 0
 }
