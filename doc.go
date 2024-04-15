@@ -96,3 +96,27 @@ func (doc *Doc) GetMap(name string) *YMap {
 
 	return m
 }
+
+func (doc *Doc) Transact(handler TransactionHandler, origin any, local bool) (any, error) {
+	transactionCleanups := doc.transactionCleanups
+	initialCall := false
+	if doc.transaction == nil {
+		initialCall = true
+		doc.transaction = newTrasaction(doc, origin, local)
+		transactionCleanups = append(transactionCleanups, doc.transaction)
+
+		if len(doc.transactionCleanups) == 1 {
+			// Run before all transactions call
+		}
+
+		// Invoke all before transaction calls
+	}
+
+	result, err := handler(doc.transaction)
+
+	if initialCall && transactionCleanups[0] == doc.transaction {
+		cleanupTransactions(transactionCleanups, 0)
+	}
+
+	return result, err
+}
