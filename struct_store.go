@@ -88,7 +88,7 @@ func findIndexSS(structs []SharedStruct, clock uint32) (uint32, error) {
 		return right, nil
 	}
 
-	midindex := uint32(math.Floor(float64((clock / (mid.Id().clock + mid.Length() - 1) / 2))))
+	midindex := uint32(math.Floor(float64((clock / (mid.Id().clock + mid.Length() - 1)) * right)))
 	for left <= right {
 		mid = structs[midindex]
 		if mid.Id().clock <= clock {
