@@ -163,3 +163,7 @@ func (store *StructStore) InsertStruct(client uint32, index uint32, structItem S
 		store.clients[client] = structs
 	}
 }
+
+func (store *StructStore) MergeWithLefts(client uint32, pos int) int {
+	return 0
+}
