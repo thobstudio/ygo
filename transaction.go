@@ -56,7 +56,6 @@ func cleanupTransactions(transactionCleanups []*Transaction, index int) error {
 
 		ds.SortAndMergeDeleteSet()
 		tx.afterState = store.StateVector()
-		doc.transaction = nil
 
 		actions := make([]func(), 0)
 		actions = append(actions, func() {

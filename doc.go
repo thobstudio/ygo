@@ -114,8 +114,12 @@ func (doc *Doc) Transact(handler TransactionHandler, origin any, local bool) (an
 
 	result, err := handler(doc.transaction)
 
-	if initialCall && transactionCleanups[0] == doc.transaction {
-		cleanupTransactions(transactionCleanups, 0)
+	if initialCall {
+		finishCleaup := transactionCleanups[0] == doc.transaction
+		doc.transaction = nil
+		if finishCleaup {
+			cleanupTransactions(transactionCleanups, 0)
+		}
 	}
 
 	return result, err
