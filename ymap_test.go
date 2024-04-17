@@ -1,8 +1,6 @@
 package ynotgo
 
 import (
-	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,10 +30,4 @@ func TestDocSetExistingMapValue(t *testing.T) {
 	assets.Set("url", "http://localhost:5001")
 	assert.IsType(t, p.Get("assets"), &YMap{})
 	assert.Equal(t, assets.Get("url"), "http://localhost:5001")
-	jsonmap, err := json.Marshal(p.ToJSON())
-	if err != nil {
-		fmt.Printf("%v \n", err)
-	} else {
-		fmt.Printf("%v \n", string(jsonmap))
-	}
 }
