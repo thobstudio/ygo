@@ -114,6 +114,8 @@ func cleanupTransactions(transactionCleanups []*Transaction, index int) error {
 			}
 		}
 
+		doc.Emit("afterTransactionCleanup", tx, doc)
+
 		if len(transactionCleanups) <= index+1 {
 			doc.transactionCleanups = []*Transaction{}
 		} else {

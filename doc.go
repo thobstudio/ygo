@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/google/uuid"
+	"github.com/olebedev/emitter"
 )
 
 func generateNewClientId() uint32 {
@@ -11,6 +12,7 @@ func generateNewClientId() uint32 {
 }
 
 type Doc struct {
+	emitter.Emitter
 	gc                  bool
 	guid                string
 	clientId            uint32
@@ -37,6 +39,7 @@ func newDoc(options ...Option) *Doc {
 		store:               newStructStore(),
 		transactionCleanups: make([]*Transaction, 0),
 	}
+	doc.Use("*", emitter.Void)
 
 	for _, o := range options {
 		o(doc)
@@ -106,10 +109,10 @@ func (doc *Doc) Transact(handler TransactionHandler, origin any, local bool) (an
 		transactionCleanups = append(transactionCleanups, doc.transaction)
 
 		if len(doc.transactionCleanups) == 1 {
-			// Run before all transactions call
+			doc.Emit("beforeAllTransactions", doc)
 		}
 
-		// Invoke all before transaction calls
+		doc.Emit("beforeTransaction", doc.transaction)
 	}
 
 	result, err := handler(doc.transaction)
