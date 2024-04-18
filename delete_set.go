@@ -136,8 +136,11 @@ func (ds *DeleteSet) TryMergeDeleteSet(store *StructStore) error {
 	return nil
 }
 
-func (ds *DeleteSet) Write(encoder *UpdateEncoderV1) {
-	binary.Write(encoder.writter, binary.LittleEndian, uint64(len(ds.clients)))
+func (ds *DeleteSet) Write(encoder *UpdateEncoderV1) error {
+	var err error
+	if err = binary.Write(encoder.writter, binary.LittleEndian, uint64(len(ds.clients))); err != nil {
+		return err
+	}
 	clients := make([]uint32, len(ds.clients))
 	i := 0
 	for client := range ds.clients {
@@ -152,11 +155,21 @@ func (ds *DeleteSet) Write(encoder *UpdateEncoderV1) {
 	for _, client := range clients {
 		dsItems := ds.clients[client]
 		encoder.ResetDsCurVal()
-		binary.Write(encoder.writter, binary.LittleEndian, client)
-		binary.Write(encoder.writter, binary.LittleEndian, len(dsItems))
+		if err = binary.Write(encoder.writter, binary.LittleEndian, client); err != nil {
+			return err
+		}
+		if err = binary.Write(encoder.writter, binary.LittleEndian, len(dsItems)); err != nil {
+			return err
+		}
 		for _, di := range dsItems {
-			encoder.WriteDsClock(di.clock)
-			encoder.WriteDsLen(di.length)
+			if err = encoder.WriteDsClock(di.clock); err != nil {
+				return err
+			}
+			if err = encoder.WriteDsLen(di.length); err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
