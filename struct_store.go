@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+
+	"github.com/thobstudio/ynotgo/lib0"
 )
 
 type StateVector map[uint32]uint32
@@ -196,4 +198,37 @@ func (store *StructStore) MergeWithLefts(client uint32, pos int) int {
 		store.clients[client] = structs
 	}
 	return 0
+}
+
+func (store *StructStore) WriteStructs(encoder *UpdateEncoderV1, structs []SharedStruct, client uint32, clock uint32) error {
+	clock = max(clock, structs[0].Id().clock)
+	startNewStuct, err := findIndexSS(structs, clock)
+	if err != nil {
+		return nil
+	}
+
+	if err = lib0.WriteVarUint(encoder.writter, uint32(len(structs)-int(startNewStuct))); err != nil {
+		return err
+	}
+	if err = encoder.WriteClient(client); err != nil {
+		return err
+	}
+
+	if err = lib0.WriteVarUint(encoder.writter, clock); err != nil {
+		return err
+	}
+
+	firstStruct := structs[startNewStuct]
+	if err = firstStruct.Write(encoder, clock-firstStruct.Id().clock); err != nil {
+		return err
+	}
+
+	for i := startNewStuct + 1; i < uint32(len(structs)); i++ {
+		err = structs[i].Write(encoder, 0)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
