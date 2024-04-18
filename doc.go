@@ -24,6 +24,7 @@ type Doc struct {
 	item                *Item
 	transaction         *Transaction
 	transactionCleanups []*Transaction
+	meta                any
 }
 
 type Option func(*Doc)
