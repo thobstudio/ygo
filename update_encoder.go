@@ -9,13 +9,20 @@ import (
 )
 
 type UpdateEncoderV1 struct {
+	buf     *bytes.Buffer
 	writter *bufio.Writer
 }
 
 func newUpdateEncoderv1() *UpdateEncoderV1 {
+	buf := &bytes.Buffer{}
 	return &UpdateEncoderV1{
-		writter: bufio.NewWriter(&bytes.Buffer{}),
+		buf:     buf,
+		writter: bufio.NewWriter(buf),
 	}
+}
+
+func (ue *UpdateEncoderV1) Bytes() []byte {
+	return ue.buf.Bytes()
 }
 
 func (ue *UpdateEncoderV1) ResetDsCurVal() {}
