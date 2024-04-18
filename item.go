@@ -2,6 +2,8 @@ package ynotgo
 
 import (
 	"errors"
+
+	"github.com/thobstudio/ynotgo/lib0"
 )
 
 type Item struct {
@@ -14,7 +16,7 @@ type Item struct {
 	parent      interface{}
 	parentSub   string
 	content     Content
-	info        byte
+	info        uint
 }
 
 func newItem(
@@ -27,9 +29,9 @@ func newItem(
 	parentSub string,
 	content Content,
 ) *Item {
-	var info byte = 0
+	var info uint = 0
 	if content.Countable() {
-		info = BIT2
+		info = lib0.Bit2
 	}
 	return &Item{
 		id:          id,
@@ -242,29 +244,29 @@ func (item *Item) LastId() *ID {
 
 func (item *Item) Deleted() bool {
 	// BIT3 is bitmask for deleted
-	return item.info&BIT3 > 0
+	return item.info&lib0.Bit3 > 0
 }
 
 func (item *Item) SetDeleted(doDelete bool) {
 	if item.Deleted() != doDelete {
-		item.info ^= BIT3
+		item.info ^= lib0.Bit3
 	}
 }
 
 func (item *Item) markDeleted() {
-	item.info |= BIT3
+	item.info |= lib0.Bit3
 }
 
 func (item *Item) Countable() bool {
-	return item.info&BIT2 > 0
+	return item.info&lib0.Bit2 > 0
 }
 
 func (item *Item) Keep() bool {
-	return item.info&BIT1 > 0
+	return item.info&lib0.Bit1 > 0
 }
 
 func (item *Item) SetKeep(doKeep bool) {
 	if item.Keep() != doKeep {
-		item.info ^= BIT1
+		item.info ^= lib0.Bit1
 	}
 }
