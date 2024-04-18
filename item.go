@@ -16,7 +16,7 @@ type Item struct {
 	parent      interface{}
 	parentSub   string
 	content     Content
-	info        uint
+	info        uint32
 }
 
 func newItem(
@@ -29,7 +29,7 @@ func newItem(
 	parentSub string,
 	content Content,
 ) *Item {
-	var info uint = 0
+	var info uint32 = 0
 	if content.Countable() {
 		info = lib0.Bit2
 	}
