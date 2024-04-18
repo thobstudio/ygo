@@ -52,8 +52,19 @@ func (content *ContentAny) Delete(tx *Transaction) {}
 
 func (content *ContentAny) Gc(store *StructStore) {}
 
-// TODO: Implement once the encoder has been taken care of
-func (content *ContentAny) Write() {}
+func (content *ContentAny) Write(encoder *UpdateEncoderV1, offset uint32) error {
+	length := len(content.arr)
+	if err := encoder.WriteLength(uint32(length)); err != nil {
+		return err
+	}
+
+	for i := int(offset); i < length; i++ {
+		c := content.arr[i]
+		encoder.WriteAny(c)
+	}
+
+	return nil
+}
 
 func (content *ContentAny) Ref() uint8 {
 	return 8

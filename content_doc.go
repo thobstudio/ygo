@@ -1,12 +1,33 @@
 package ynotgo
 
+type DocOpts struct {
+	gc      bool
+	autLoad bool
+	meta    any
+}
+
 type ContentDoc struct {
-	doc *Doc
+	doc  *Doc
+	opts *DocOpts
 }
 
 func newContentDoc(doc *Doc) *ContentDoc {
+	opts := &DocOpts{
+		gc:      true,
+		autLoad: false,
+	}
+	if !doc.gc {
+		opts.gc = true
+	}
+	if doc.autoLoad {
+		opts.autLoad = true
+	}
+	if doc.meta != nil {
+		opts.meta = doc.meta
+	}
 	return &ContentDoc{
-		doc: doc,
+		doc:  doc,
+		opts: opts,
 	}
 }
 
@@ -50,7 +71,15 @@ func (content *ContentDoc) Delete(tx *Transaction) {
 func (content *ContentDoc) Gc(store *StructStore) {}
 
 // TODO: Implement this once we have taken care of encoder
-func (content *ContentDoc) Write() {}
+func (content *ContentDoc) Write(encoder *UpdateEncoderV1, offset uint32) error {
+	if err := encoder.WriteString(content.doc.guid); err != nil {
+		return err
+	}
+	if err := encoder.WriteAny(content.opts); err != nil {
+		return err
+	}
+	return nil
+}
 
 func (content *ContentDoc) Ref() uint8 {
 	return 9

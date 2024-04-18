@@ -50,8 +50,9 @@ func (content *ContentDeleted) Delete(tx *Transaction) {}
 
 func (content *ContentDeleted) Gc(store *StructStore) {}
 
-// TODO: Implement once the encoder has been taken care of
-func (content *ContentDeleted) Write() {}
+func (content *ContentDeleted) Write(encoder *UpdateEncoderV1, offset uint32) error {
+	return encoder.WriteLength(content.length - offset)
+}
 
 func (content *ContentDeleted) Ref() uint8 {
 	return 1

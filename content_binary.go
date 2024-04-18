@@ -42,8 +42,9 @@ func (content *ContentBinary) Delete(tx *Transaction) {}
 
 func (content *ContentBinary) Gc(store *StructStore) {}
 
-// TODO: Implement this once the encoder has been taken care of
-func (content *ContentBinary) Write() {}
+func (content *ContentBinary) Write(encoder *UpdateEncoderV1, offset uint32) error {
+	return encoder.WriteBuf(content.content)
+}
 
 func (content *ContentBinary) Ref() uint8 {
 	return 3

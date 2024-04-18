@@ -10,6 +10,6 @@ type Content interface {
 	Integrate(tx *Transaction, item *Item)
 	Delete(tx *Transaction)
 	Gc(store *StructStore)
-	Write()
+	Write(encoder *UpdateEncoderV1, offset uint32) error
 	Ref() uint8
 }
