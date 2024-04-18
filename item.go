@@ -270,3 +270,7 @@ func (item *Item) SetKeep(doKeep bool) {
 		item.info ^= lib0.Bit1
 	}
 }
+
+func (item *Item) Write(encoder *UpdateEncoderV1, offset uint32) error {
+	return nil
+}

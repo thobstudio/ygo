@@ -42,3 +42,7 @@ func (item *Gc) Integrate(tx *Transaction, offset uint32) error {
 func (item *Gc) Deleted() bool {
 	return false
 }
+
+func (item *Gc) Write(encoder *UpdateEncoderV1, offset uint32) error {
+	return nil
+}
