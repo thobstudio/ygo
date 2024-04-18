@@ -115,6 +115,14 @@ func cleanupTransactions(transactionCleanups []*Transaction, index int) error {
 		}
 
 		doc.Emit("afterTransactionCleanup", tx, doc)
+		encoder := newUpdateEncoderv1()
+		hasContent, err := tx.WriteMessage(encoder)
+		if err != nil {
+			return err
+		}
+		if hasContent {
+			doc.Emit("update", encoder.Bytes(), tx.origin, tx.doc, tx)
+		}
 
 		if len(transactionCleanups) <= index+1 {
 			doc.transactionCleanups = []*Transaction{}
@@ -123,4 +131,28 @@ func cleanupTransactions(transactionCleanups []*Transaction, index int) error {
 		}
 	}
 	return err
+}
+
+func (tx *Transaction) WriteMessage(encoder *UpdateEncoderV1) (bool, error) {
+	dslen := len(tx.deleteSet.clients)
+	changedClocks := false
+	for client, clock := range tx.afterState {
+		if cd, ok := tx.beforeState[client]; ok && cd != clock {
+			changedClocks = true
+			break
+		}
+	}
+	if dslen == 0 && !changedClocks {
+		return false, nil
+	}
+
+	tx.deleteSet.SortAndMergeDeleteSet()
+	if err := tx.doc.store.WriteClientStructs(encoder, tx.beforeState); err != nil {
+		return false, err
+	}
+	if err := tx.deleteSet.Write(encoder); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
