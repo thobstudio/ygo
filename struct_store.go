@@ -1,10 +1,12 @@
 package ynotgo
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"math"
 	"reflect"
+	"slices"
 
 	"github.com/thobstudio/ynotgo/lib0"
 )
@@ -200,7 +202,8 @@ func (store *StructStore) MergeWithLefts(client uint32, pos int) int {
 	return 0
 }
 
-func (store *StructStore) WriteStructs(encoder *UpdateEncoderV1, structs []SharedStruct, client uint32, clock uint32) error {
+func (store *StructStore) WriteStructs(encoder *UpdateEncoderV1, client uint32, clock uint32) error {
+	structs := store.GetStructs(client)
 	clock = max(clock, structs[0].Id().clock)
 	startNewStuct, err := findIndexSS(structs, clock)
 	if err != nil {
@@ -230,5 +233,42 @@ func (store *StructStore) WriteStructs(encoder *UpdateEncoderV1, structs []Share
 		}
 	}
 
+	return nil
+}
+
+func (store *StructStore) WriteClientStructs(encoder *UpdateEncoderV1, structs map[uint32]uint32) error {
+	filteredStructs := make(map[uint32]uint32, len(structs))
+	for client, clock := range structs {
+		if store.State(client) > clock {
+			filteredStructs[client] = clock
+		}
+	}
+
+	for client := range store.StateVector() {
+		if _, ok := structs[client]; !ok {
+			filteredStructs[client] = 0
+		}
+	}
+
+	if err := lib0.WriteVarUint(encoder.writter, uint32(len(filteredStructs))); err != nil {
+		return err
+	}
+
+	ss := make([]uint32, len(structs))
+	index := 0
+	for client := range filteredStructs {
+		ss[index] = client
+		index++
+	}
+
+	slices.SortFunc(ss, func(a, b uint32) int {
+		return cmp.Compare(b, a)
+	})
+
+	for _, client := range ss {
+		if err := store.WriteStructs(encoder, client, filteredStructs[client]); err != nil {
+			return err
+		}
+	}
 	return nil
 }
