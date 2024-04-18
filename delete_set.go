@@ -2,6 +2,7 @@ package ynotgo
 
 import (
 	"cmp"
+	"encoding/binary"
 	"math"
 	"slices"
 )
@@ -133,4 +134,29 @@ func (ds *DeleteSet) TryMergeDeleteSet(store *StructStore) error {
 		}
 	}
 	return nil
+}
+
+func (ds *DeleteSet) Write(encoder *UpdateEncoderV1) {
+	binary.Write(encoder.writter, binary.LittleEndian, uint64(len(ds.clients)))
+	clients := make([]uint32, len(ds.clients))
+	i := 0
+	for client := range ds.clients {
+		clients[i] = client
+		i++
+	}
+
+	slices.SortFunc(clients, func(a, b uint32) int {
+		return cmp.Compare(b, a)
+	})
+
+	for _, client := range clients {
+		dsItems := ds.clients[client]
+		encoder.ResetDsCurVal()
+		binary.Write(encoder.writter, binary.LittleEndian, client)
+		binary.Write(encoder.writter, binary.LittleEndian, len(dsItems))
+		for _, di := range dsItems {
+			encoder.WriteDsClock(di.clock)
+			encoder.WriteDsLen(di.length)
+		}
+	}
 }
