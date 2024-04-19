@@ -21,8 +21,11 @@ func newUpdateEncoderv1() *UpdateEncoderV1 {
 	}
 }
 
-func (ue *UpdateEncoderV1) Bytes() []byte {
-	return ue.buf.Bytes()
+func (ue *UpdateEncoderV1) Bytes() ([]byte, error) {
+	if err := ue.writter.Flush(); err != nil {
+		return []byte{}, err
+	}
+	return ue.buf.Bytes(), nil
 }
 
 func (ue *UpdateEncoderV1) ResetDsCurVal() {}

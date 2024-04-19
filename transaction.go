@@ -121,7 +121,11 @@ func cleanupTransactions(transactionCleanups []*Transaction, index int) error {
 			return err
 		}
 		if hasContent {
-			doc.Emit("update", encoder.Bytes(), tx.origin, tx.doc, tx)
+			buf, err := encoder.Bytes()
+			if err != nil {
+				return err
+			}
+			doc.Emit("update", buf, tx.origin, tx.doc, tx)
 		}
 
 		if len(transactionCleanups) <= index+1 {
@@ -137,7 +141,7 @@ func (tx *Transaction) WriteMessage(encoder *UpdateEncoderV1) (bool, error) {
 	dslen := len(tx.deleteSet.clients)
 	changedClocks := false
 	for client, clock := range tx.afterState {
-		if cd, ok := tx.beforeState[client]; ok && cd != clock {
+		if cd, ok := tx.beforeState[client]; !ok || cd != clock {
 			changedClocks = true
 			break
 		}
