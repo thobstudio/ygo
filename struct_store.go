@@ -58,7 +58,7 @@ func (store *StructStore) State(client uint32) uint32 {
 }
 
 func (store *StructStore) StateVector() StateVector {
-	sm := make(StateVector, 0)
+	sm := make(StateVector, len(store.clients))
 	for client, structs := range store.clients {
 		structItem := structs[len(structs)-1]
 		sm[client] = structItem.Id().clock + structItem.Length()
@@ -254,7 +254,7 @@ func (store *StructStore) WriteClientStructs(encoder *UpdateEncoderV1, structs m
 		return err
 	}
 
-	ss := make([]uint32, len(structs))
+	ss := make([]uint32, len(filteredStructs))
 	index := 0
 	for client := range filteredStructs {
 		ss[index] = client
