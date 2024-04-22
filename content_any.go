@@ -54,7 +54,7 @@ func (content *ContentAny) Gc(store *StructStore) {}
 
 func (content *ContentAny) Write(encoder *UpdateEncoderV1, offset uint32) error {
 	length := len(content.arr)
-	if err := encoder.WriteLength(uint32(length)); err != nil {
+	if err := encoder.WriteLen(uint32(length)); err != nil {
 		return err
 	}
 
