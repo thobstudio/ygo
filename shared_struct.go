@@ -6,5 +6,5 @@ type SharedStruct interface {
 	MergeWith(right SharedStruct) (bool, error)
 	Integrate(tx *Transaction, offset uint32) error
 	Deleted() bool
-	Write(encoder *UpdateEncoderV1, offset uint32) error
+	Write(encoder UpdateEncoder, offset uint32) error
 }

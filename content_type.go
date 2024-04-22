@@ -47,7 +47,7 @@ func (content *ContentType) Delete(tx *Transaction) {}
 func (content *ContentType) Gc(store *StructStore) {}
 
 // TODO: Implement this once we have taken care of encoder
-func (content *ContentType) Write(encoder *UpdateEncoderV1, offset uint32) error {
+func (content *ContentType) Write(encoder UpdateEncoder, offset uint32) error {
 	return content.Write(encoder, offset)
 }
 

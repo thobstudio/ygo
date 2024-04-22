@@ -202,7 +202,7 @@ func (store *StructStore) MergeWithLefts(client uint32, pos int) int {
 	return 0
 }
 
-func (store *StructStore) WriteStructs(encoder *UpdateEncoderV1, client uint32, clock uint32) error {
+func (store *StructStore) WriteStructs(encoder UpdateEncoder, client uint32, clock uint32) error {
 	structs := store.GetStructs(client)
 	clock = max(clock, structs[0].Id().clock)
 	startNewStuct, err := findIndexSS(structs, clock)
@@ -236,7 +236,7 @@ func (store *StructStore) WriteStructs(encoder *UpdateEncoderV1, client uint32, 
 	return nil
 }
 
-func (store *StructStore) WriteClientStructs(encoder *UpdateEncoderV1, structs map[uint32]uint32) error {
+func (store *StructStore) WriteClientStructs(encoder UpdateEncoder, structs map[uint32]uint32) error {
 	filteredStructs := make(map[uint32]uint32, len(structs))
 	for client, clock := range structs {
 		if store.State(client) > clock {

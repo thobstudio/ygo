@@ -42,7 +42,7 @@ func (content *ContentBinary) Delete(tx *Transaction) {}
 
 func (content *ContentBinary) Gc(store *StructStore) {}
 
-func (content *ContentBinary) Write(encoder *UpdateEncoderV1, offset uint32) error {
+func (content *ContentBinary) Write(encoder UpdateEncoder, offset uint32) error {
 	return encoder.WriteBuf(content.content)
 }
 

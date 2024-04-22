@@ -137,7 +137,7 @@ func cleanupTransactions(transactionCleanups []*Transaction, index int) error {
 	return err
 }
 
-func (tx *Transaction) WriteMessage(encoder *UpdateEncoderV1) (bool, error) {
+func (tx *Transaction) WriteMessage(encoder UpdateEncoder) (bool, error) {
 	dslen := len(tx.deleteSet.clients)
 	changedClocks := false
 	for client, clock := range tx.afterState {

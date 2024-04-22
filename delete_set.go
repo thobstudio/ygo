@@ -136,7 +136,7 @@ func (ds *DeleteSet) TryMergeDeleteSet(store *StructStore) error {
 	return nil
 }
 
-func (ds *DeleteSet) Write(encoder *UpdateEncoderV1) error {
+func (ds *DeleteSet) Write(encoder UpdateEncoder) error {
 	var err error
 	if err = binary.Write(encoder.Writer(), binary.LittleEndian, uint64(len(ds.clients))); err != nil {
 		return err

@@ -50,7 +50,7 @@ func (content *ContentDeleted) Delete(tx *Transaction) {}
 
 func (content *ContentDeleted) Gc(store *StructStore) {}
 
-func (content *ContentDeleted) Write(encoder *UpdateEncoderV1, offset uint32) error {
+func (content *ContentDeleted) Write(encoder UpdateEncoder, offset uint32) error {
 	return encoder.WriteLen(content.length - offset)
 }
 

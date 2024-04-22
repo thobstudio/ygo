@@ -271,6 +271,6 @@ func (item *Item) SetKeep(doKeep bool) {
 	}
 }
 
-func (item *Item) Write(encoder *UpdateEncoderV1, offset uint32) error {
+func (item *Item) Write(encoder UpdateEncoder, offset uint32) error {
 	return nil
 }
