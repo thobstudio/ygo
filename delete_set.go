@@ -138,7 +138,7 @@ func (ds *DeleteSet) TryMergeDeleteSet(store *StructStore) error {
 
 func (ds *DeleteSet) Write(encoder *UpdateEncoderV1) error {
 	var err error
-	if err = binary.Write(encoder.writter, binary.LittleEndian, uint64(len(ds.clients))); err != nil {
+	if err = binary.Write(encoder.Writer(), binary.LittleEndian, uint64(len(ds.clients))); err != nil {
 		return err
 	}
 	clients := make([]uint32, len(ds.clients))
@@ -155,10 +155,10 @@ func (ds *DeleteSet) Write(encoder *UpdateEncoderV1) error {
 	for _, client := range clients {
 		dsItems := ds.clients[client]
 		encoder.ResetDsCurVal()
-		if err = binary.Write(encoder.writter, binary.LittleEndian, client); err != nil {
+		if err = binary.Write(encoder.Writer(), binary.LittleEndian, client); err != nil {
 			return err
 		}
-		if err = binary.Write(encoder.writter, binary.LittleEndian, len(dsItems)); err != nil {
+		if err = binary.Write(encoder.Writer(), binary.LittleEndian, len(dsItems)); err != nil {
 			return err
 		}
 		for _, di := range dsItems {
