@@ -115,13 +115,13 @@ func cleanupTransactions(transactionCleanups []*Transaction, index int) error {
 		}
 
 		doc.Emit("afterTransactionCleanup", tx, doc)
-		encoder := newUpdateEncoderv1()
+		encoder := newUpdateEncoderV1()
 		hasContent, err := tx.WriteMessage(encoder)
 		if err != nil {
 			return err
 		}
 		if hasContent {
-			buf, err := encoder.Bytes()
+			buf, err := encoder.ToUint8Array()
 			if err != nil {
 				return err
 			}
