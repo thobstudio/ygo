@@ -4,8 +4,8 @@ import "bufio"
 
 type DsDecoder interface {
 	ResetDsCurVal() error
-	ReadDsClock() error
-	ReadDsLen() error
+	ReadDsClock() (uint32, error)
+	ReadDsLen() (uint32, error)
 }
 
 type UpdateDecoder interface {
@@ -14,9 +14,9 @@ type UpdateDecoder interface {
 	ReadLeftId() (*ID, error)
 	ReadRightId() (*ID, error)
 	ReadClient() (uint32, error)
-	ReadInfo() (uint8, error)
+	ReadInfo() (uint32, error)
 	ReadString() (string, error)
-	ReadParentInfo() (uint8, error)
+	ReadParentInfo() (uint32, error)
 	ReadTypeRef() (uint32, error)
 	ReadLen() (uint32, error)
 	ReadAny() (any, error)

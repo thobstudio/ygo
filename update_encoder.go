@@ -3,7 +3,6 @@ package ynotgo
 import "bufio"
 
 type DsEncoder interface {
-	ToUint8Array() ([]byte, error)
 	ResetDsCurVal() error
 	WriteDsClock(num uint32) error
 	WriteDsLen(num uint32) error
