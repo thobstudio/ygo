@@ -8,8 +8,12 @@ import (
 	"io"
 )
 
-func ReadVarUint(reader *bufio.Reader) (uint64, error) {
-	return binary.ReadUvarint(reader)
+func ReadVarUint(reader *bufio.Reader) (uint32, error) {
+	u, err := binary.ReadUvarint(reader)
+	if err != nil {
+		return 0, err
+	}
+	return uint32(u), nil
 }
 
 func ReadVarInt(reader *bufio.Reader) (int32, error) {

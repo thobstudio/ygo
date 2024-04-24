@@ -8,7 +8,7 @@ import (
 	"reflect"
 )
 
-func WriteVarUint(writer *bufio.Writer, x uint64) error {
+func WriteVarUint(writer *bufio.Writer, x uint32) error {
 	for x >= 0x80 {
 		if err := writer.WriteByte(byte(x) | 0x80); err != nil {
 			return err
@@ -55,7 +55,7 @@ func WriteVarint(writer *bufio.Writer, x int32) error {
 
 func WriteUint8Array(writer *bufio.Writer, buf []byte) error {
 	length := len(buf)
-	if err := WriteVarUint(writer, uint64(length)); err != nil {
+	if err := WriteVarUint(writer, uint32(length)); err != nil {
 		return err
 	}
 	_, err := writer.Write(buf)
@@ -64,7 +64,7 @@ func WriteUint8Array(writer *bufio.Writer, buf []byte) error {
 
 func WriteVarString(writer *bufio.Writer, s string) error {
 	length := len(s)
-	if err := WriteVarUint(writer, uint64(length)); err != nil {
+	if err := WriteVarUint(writer, uint32(length)); err != nil {
 		return err
 	}
 	_, err := writer.Write([]byte(s))
