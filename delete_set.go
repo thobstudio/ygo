@@ -33,6 +33,14 @@ func NewDeleteSet() *DeleteSet {
 	return newDeleteSet()
 }
 
+func (ds *DeleteSet) ClientsCount() int {
+	return len(ds.clients)
+}
+
+func (ds *DeleteSet) SetClientDeleteItems(client uint32, items []*DeleteItem) {
+	ds.clients[client] = items
+}
+
 func (ds *DeleteSet) AddDeleteItem(client, clock, length uint32) {
 	if _, ok := ds.clients[client]; !ok {
 		ds.clients[client] = make([]*DeleteItem, 0)
@@ -172,4 +180,18 @@ func (ds *DeleteSet) Write(encoder UpdateEncoder) error {
 	}
 
 	return nil
+}
+
+func (ds *DeleteSet) ForEach(iteratee func(client uint32, items []*DeleteItem)) {
+	clients := make([]uint32, len(ds.clients))
+	i := 0
+	for c := range ds.clients {
+		clients[i] = c
+		i++
+	}
+	slices.Sort(clients)
+
+	for _, client := range clients {
+		iteratee(client, ds.clients[client])
+	}
 }
