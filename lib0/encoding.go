@@ -167,7 +167,7 @@ func WriteAny(writer *bufio.Writer, o any) error {
 		if err := writer.WriteByte(118); err != nil {
 			return err
 		}
-		if err := WriteVarUint(writer, uint64(len(t))); err != nil {
+		if err := WriteVarUint(writer, uint32(len(t))); err != nil {
 			return err
 		}
 		for key, value := range t {
@@ -183,7 +183,7 @@ func WriteAny(writer *bufio.Writer, o any) error {
 		if err := writer.WriteByte(117); err != nil {
 			return err
 		}
-		if err := WriteVarUint(writer, uint64(len(t))); err != nil {
+		if err := WriteVarUint(writer, uint32(len(t))); err != nil {
 			return err
 		}
 		for _, item := range t {

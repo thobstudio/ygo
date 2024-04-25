@@ -12,11 +12,11 @@ import (
 func TestEncodingVarUint(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
 	writer := bufio.NewWriter(buf)
-	WriteVarUint(writer, uint64(256))
+	WriteVarUint(writer, uint32(256))
 	writer.Flush()
 
 	num, _ := ReadVarUint(bufio.NewReader(buf))
-	assert.Equal(t, uint64(256), num)
+	assert.Equal(t, uint32(256), num)
 }
 
 func TestEncodingVarint(t *testing.T) {
