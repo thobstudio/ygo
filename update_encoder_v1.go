@@ -21,6 +21,14 @@ func newUpdateEncoderV1() *UpdateEncoderV1 {
 	}
 }
 
+func NewUpdateEncoderV1() *UpdateEncoderV1 {
+	buf := bytes.NewBuffer(nil)
+	return &UpdateEncoderV1{
+		buf:    buf,
+		writer: bufio.NewWriter(buf),
+	}
+}
+
 func (e UpdateEncoderV1) ResetDsCurVal() error {
 	// This is noop in v1
 	return nil
