@@ -19,6 +19,10 @@ func NewYMap() *YMap {
 	return newYMap()
 }
 
+func (m *YMap) Doc() *Doc {
+	return m.doc
+}
+
 func (m *YMap) Item() *Item {
 	return m.item
 }
