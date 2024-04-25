@@ -272,3 +272,54 @@ func (store *StructStore) WriteClientStructs(encoder UpdateEncoder, structs map[
 	}
 	return nil
 }
+
+func (store *StructStore) WriteDeleteSet(encoder UpdateEncoder) error {
+	ds, err := store.CreateDeleteSet()
+	if err != nil {
+		return err
+	}
+
+	if err := lib0.WriteVarUint(encoder.Writer(), uint32(ds.ClientsCount())); err != nil {
+		return err
+	}
+	ds.ForEach(func(client uint32, dsItems []*DeleteItem) {
+		fmt.Printf("client : %v dsitems : %v ", client, dsItems)
+		encoder.ResetDsCurVal()
+		lib0.WriteVarUint(encoder.Writer(), client)
+		length := len(dsItems)
+		lib0.WriteVarUint(encoder.Writer(), uint32(length))
+		for i := 0; i < length; i++ {
+			item := dsItems[i]
+			encoder.WriteDsClock(item.clock)
+			encoder.WriteDsLen(item.length)
+		}
+	})
+
+	return nil
+}
+
+func (store *StructStore) CreateDeleteSet() (*DeleteSet, error) {
+	ds := newDeleteSet()
+	for client, structs := range store.clients {
+		dsItems := make([]*DeleteItem, 0)
+		for i := 0; i < len(structs); i++ {
+			_struct := structs[i]
+			if _struct.Deleted() {
+				clock := _struct.Id().clock
+				length := _struct.Length()
+				if i+1 < len(structs) {
+					for j := i + 1; j < len(structs); j++ {
+						next := structs[j]
+						length += next.Length()
+					}
+				}
+				dsItems = append(dsItems, newDeleteItem(clock, length))
+			}
+		}
+
+		if len(dsItems) > 0 {
+			ds.clients[client] = dsItems
+		}
+	}
+	return ds, nil
+}
