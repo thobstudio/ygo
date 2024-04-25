@@ -8,17 +8,37 @@ import (
 	"github.com/thobstudio/ynotgo/lib0"
 )
 
-type UpdateDecoderV1 struct {
+type DsDecoderV1 struct {
 	buf    *bytes.Buffer
 	reader *bufio.Reader
+}
+
+func newDsDecoderV1() *DsDecoderV1 {
+	return &DsDecoderV1{}
+}
+
+func NewDsDecoderV1() *DsDecoderV1 {
+	return newDsDecoderV1()
+}
+
+//
+
+type UpdateDecoderV1 struct {
+	DsDecoderV1
 }
 
 func newUpdatDecoderV1() *UpdateDecoderV1 {
 	buf := bytes.NewBuffer(nil)
 	return &UpdateDecoderV1{
-		buf:    buf,
-		reader: bufio.NewReader(buf),
+		DsDecoderV1: DsDecoderV1{
+			buf:    buf,
+			reader: bufio.NewReader(buf),
+		},
 	}
+}
+
+func NewUpdatDecoderV1() *UpdateDecoderV1 {
+	return newUpdatDecoderV1()
 }
 
 func (d *UpdateDecoderV1) ResetDsCurVal() error {

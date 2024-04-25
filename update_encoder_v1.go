@@ -8,25 +8,27 @@ import (
 	"github.com/thobstudio/ynotgo/lib0"
 )
 
-type UpdateEncoderV1 struct {
+type DsEncoderV1 struct {
 	buf    *bytes.Buffer
 	writer *bufio.Writer
+}
+
+type UpdateEncoderV1 struct {
+	DsEncoderV1
 }
 
 func newUpdateEncoderV1() *UpdateEncoderV1 {
 	buf := bytes.NewBuffer(nil)
 	return &UpdateEncoderV1{
-		buf:    buf,
-		writer: bufio.NewWriter(buf),
+		DsEncoderV1: DsEncoderV1{
+			buf:    buf,
+			writer: bufio.NewWriter(buf),
+		},
 	}
 }
 
 func NewUpdateEncoderV1() *UpdateEncoderV1 {
-	buf := bytes.NewBuffer(nil)
-	return &UpdateEncoderV1{
-		buf:    buf,
-		writer: bufio.NewWriter(buf),
-	}
+	return newUpdateEncoderV1()
 }
 
 func (e UpdateEncoderV1) ResetDsCurVal() error {
