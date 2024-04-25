@@ -1,6 +1,7 @@
 package ynotgo
 
 type SharedType interface {
+	Doc() *Doc
 	Item() *Item
 	Start() *Item
 	SetStart(item *Item)
