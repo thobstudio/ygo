@@ -210,14 +210,14 @@ func (store *StructStore) WriteStructs(encoder UpdateEncoder, client uint32, clo
 		return nil
 	}
 
-	if err = lib0.WriteVarUint(encoder.Writer(), uint64(len(structs)-int(startNewStuct))); err != nil {
+	if err = lib0.WriteVarUint(encoder.Writer(), uint32(len(structs)-int(startNewStuct))); err != nil {
 		return err
 	}
 	if err = encoder.WriteClient(client); err != nil {
 		return err
 	}
 
-	if err = lib0.WriteVarUint(encoder.Writer(), uint64(clock)); err != nil {
+	if err = lib0.WriteVarUint(encoder.Writer(), uint32(clock)); err != nil {
 		return err
 	}
 
@@ -250,7 +250,7 @@ func (store *StructStore) WriteClientStructs(encoder UpdateEncoder, structs map[
 		}
 	}
 
-	if err := lib0.WriteVarUint(encoder.Writer(), uint64(len(filteredStructs))); err != nil {
+	if err := lib0.WriteVarUint(encoder.Writer(), uint32(len(filteredStructs))); err != nil {
 		return err
 	}
 
