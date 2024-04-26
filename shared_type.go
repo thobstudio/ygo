@@ -13,4 +13,5 @@ type SharedType interface {
 	Copy() SharedType
 	Clone() SharedType
 	ToJSON() any
+	Write(encoder UpdateEncoder) error
 }
