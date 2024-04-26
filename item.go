@@ -385,3 +385,28 @@ func (item *Item) Write(encoder UpdateEncoder, offset uint32) error {
 
 	return item.content.Write(encoder, offset)
 }
+
+func readItemContent(decoder UpdateDecoder, info uint32) (Content, error) {
+	switch info & lib0.Bits5 {
+	case 1:
+		panic("not implemented")
+	case 2:
+		panic("not implemented")
+	case 3:
+		panic("not implemented")
+	case 4:
+		panic("not implemented")
+	case 5:
+		panic("not implemented")
+	case 6:
+		panic("not implemented")
+	case 7:
+		panic("not implemented")
+	case 8:
+		return readContentAny(decoder)
+	case 9:
+		panic("not implemented")
+	default:
+		return nil, errors.New("unexpected case")
+	}
+}
