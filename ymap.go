@@ -2,6 +2,8 @@ package ynotgo
 
 import "errors"
 
+const YMapRefID = 1
+
 type YMap struct {
 	AbstractType
 	prelimContent map[string]interface{}
@@ -17,14 +19,6 @@ func newYMap() *YMap {
 
 func NewYMap() *YMap {
 	return newYMap()
-}
-
-func (m *YMap) Doc() *Doc {
-	return m.doc
-}
-
-func (m *YMap) Item() *Item {
-	return m.item
 }
 
 func (m *YMap) Has(key string) bool {
@@ -97,28 +91,22 @@ func (m *YMap) SetItem(key string, item *Item) {
 }
 
 func (m *YMap) Clone() SharedType {
-	return newYMap()
+	nm := newYMap()
+	for key, item := range m.itemMap {
+		if !item.Deleted() {
+			value := item.content.Content()[item.length-1]
+			m.Set(key, value)
+		}
+	}
+	return nm
 }
 
 func (m *YMap) Copy() SharedType {
-	newmap := newYMap()
-	return newmap
+	return newYMap()
 }
 
-func (m *YMap) Length() uint32 {
-	return m.length
-}
-
-func (m *YMap) SetLength(length uint32) {
-	m.length = length
-}
-
-func (m *YMap) Start() *Item {
-	return m.start
-}
-
-func (m *YMap) SetStart(start *Item) {
-	m.start = start
+func (m *YMap) Write(encoder UpdateEncoder) error {
+	return encoder.WriteTypeRef(YMapRefID)
 }
 
 func (m *YMap) ToJSON() any {
