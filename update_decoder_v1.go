@@ -43,8 +43,8 @@ type UpdateDecoderV1 struct {
 	DsDecoderV1
 }
 
-func newUpdatDecoderV1() *UpdateDecoderV1 {
-	buf := bytes.NewBuffer(nil)
+func newUpdateDecoderV1(update []byte) *UpdateDecoderV1 {
+	buf := bytes.NewBuffer(update)
 	return &UpdateDecoderV1{
 		DsDecoderV1: DsDecoderV1{
 			buf:    buf,
@@ -53,8 +53,8 @@ func newUpdatDecoderV1() *UpdateDecoderV1 {
 	}
 }
 
-func NewUpdatDecoderV1() *UpdateDecoderV1 {
-	return newUpdatDecoderV1()
+func NewUpdateDecoderV1(update []byte) *UpdateDecoderV1 {
+	return newUpdateDecoderV1(update)
 }
 
 func (d *UpdateDecoderV1) Reader() *bufio.Reader {
@@ -109,12 +109,12 @@ func (d *UpdateDecoderV1) ReadString() (string, error) {
 	return s, nil
 }
 
-func (d *UpdateDecoderV1) ReadParentInfo() (uint32, error) {
+func (d *UpdateDecoderV1) ReadParentInfo() (bool, error) {
 	info, err := lib0.ReadVarUint(d.reader)
 	if err != nil {
-		return 0, err
+		return false, err
 	}
-	return info, nil
+	return info == 1, nil
 }
 
 func (d *UpdateDecoderV1) ReadTypeRef() (uint32, error) {

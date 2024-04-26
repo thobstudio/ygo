@@ -16,7 +16,7 @@ type UpdateDecoder interface {
 	ReadClient() (uint32, error)
 	ReadInfo() (uint32, error)
 	ReadString() (string, error)
-	ReadParentInfo() (uint32, error)
+	ReadParentInfo() (bool, error)
 	ReadTypeRef() (uint32, error)
 	ReadLen() (uint32, error)
 	ReadAny() (any, error)
