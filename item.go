@@ -2,6 +2,7 @@ package ynotgo
 
 import (
 	"errors"
+	"reflect"
 
 	"github.com/thobstudio/ynotgo/lib0"
 )
@@ -272,5 +273,58 @@ func (item *Item) SetKeep(doKeep bool) {
 }
 
 func (item *Item) Write(encoder UpdateEncoder, offset uint32) error {
-	return nil
+	leftOrigin := item.leftOrigin
+	if offset > 0 {
+		leftOrigin = newId(item.id.client, item.id.clock+offset-1)
+	}
+	rightOrigin := item.rightOrigin
+	var leftOriginInfo uint32 = lib0.Bit8
+	if leftOrigin == nil {
+		leftOriginInfo = 0
+	}
+	var rightOriginInfo uint32 = lib0.Bit7
+	if rightOrigin == nil {
+		rightOriginInfo = 0
+	}
+	var parentSubInfo uint32 = lib0.Bit6
+	if item.parentSub == "" {
+		parentSubInfo = 0
+	}
+	var info uint32 = uint32(item.content.Ref())&lib0.Bits5 | leftOriginInfo | rightOriginInfo | parentSubInfo
+	encoder.WriteInfo(info)
+	if leftOrigin != nil {
+		encoder.WriteLeftId(leftOrigin)
+	}
+	if rightOrigin != nil {
+		encoder.WriteRightId(rightOrigin)
+	}
+
+	if leftOrigin == nil && rightOrigin == nil {
+		parent, ok := item.parent.(SharedType)
+		if ok {
+			if parent.Item() == nil {
+				yKey, err := findRootTypeKey(parent)
+				if err != nil {
+					return err
+				}
+				encoder.WriteParentInfo(true)
+				encoder.WriteString(yKey)
+			} else {
+				encoder.WriteParentInfo(false)
+				encoder.WriteLeftId(parent.Item().id)
+			}
+		} else if reflect.TypeOf(item.parent) == reflect.TypeOf(&ID{}) {
+			//
+		} else if reflect.TypeOf(item.parent).Kind() == reflect.String {
+			//
+		} else {
+			return errors.New("unexpected case")
+		}
+
+		if item.parentSub != "" {
+			encoder.WriteString(item.parentSub)
+		}
+	}
+
+	return item.content.Write(encoder, offset)
 }
