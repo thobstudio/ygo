@@ -135,6 +135,112 @@ func (doc *Doc) Transact(handler TransactionHandler, origin any, local bool) (an
 	return result, err
 }
 
+func (doc *Doc) readClientsStructRefs(decoder UpdateDecoder) (map[uint32]*ClientStructRef, error) {
+	reader := decoder.Reader()
+
+	clientRefs := make(map[uint32]*ClientStructRef)
+	numOfStateUpdates, err := lib0.ReadVarUint(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < int(numOfStateUpdates); i++ {
+		numOfStructs, err := lib0.ReadVarUint(reader)
+		if err != nil {
+			return nil, err
+		}
+
+		refs := make([]SharedStruct, numOfStructs)
+
+		client, err := decoder.ReadClient()
+		if err != nil {
+			return nil, err
+		}
+		clock, err := lib0.ReadVarUint(reader)
+		if err != nil {
+			return nil, err
+		}
+
+		clientRefs[client] = &ClientStructRef{i: 0, refs: refs}
+
+		for i := 0; i < int(numOfStructs); i++ {
+			info, err := decoder.ReadInfo()
+			if err != nil {
+				return nil, err
+			}
+			switch lib0.Bits5 & info {
+			case 0:
+				length, err := decoder.ReadLen()
+				if err != nil {
+					return nil, err
+				}
+				refs[i] = newGc(newId(client, clock), length)
+				clock += length
+				break
+			case 10:
+				panic("not implemented")
+			default:
+				var (
+					leftOrigin         *ID
+					rightOrigin        *ID
+					hasParentYKey      bool   = false
+					cantCopyParentInfo bool   = (info & (lib0.Bit7 | lib0.Bit8)) == 0
+					parentYKey         string = ""
+					parent             any
+					parentSub          string
+				)
+
+				if info&lib0.Bit8 == lib0.Bit8 {
+					leftOrigin, err = decoder.ReadLeftId()
+					if err != nil {
+						return nil, err
+					}
+				}
+
+				if info&lib0.Bit7 == lib0.Bit7 {
+					rightOrigin, err = decoder.ReadRightId()
+					if err != nil {
+						return nil, err
+					}
+				}
+
+				if cantCopyParentInfo {
+					hasParentYKey, err = decoder.ReadParentInfo()
+				}
+
+				if cantCopyParentInfo && hasParentYKey {
+					parentYKey, err = decoder.ReadString()
+				}
+
+				if cantCopyParentInfo && !hasParentYKey {
+					parent, err = decoder.ReadLeftId()
+					if err != nil {
+						return nil, err
+					}
+				} else if parentYKey != "" {
+					parent = doc.Get(parentYKey)
+				}
+
+				if cantCopyParentInfo && (info&lib0.Bit6) == lib0.Bit6 {
+					parentSub, err = decoder.ReadString()
+					if err != nil {
+						return nil, err
+					}
+				}
+				content, err := readItemContent(decoder, info)
+				if err != nil {
+					return nil, err
+				}
+				s := newItem(newId(client, clock), nil, nil, leftOrigin, rightOrigin, parent, parentSub, content)
+				refs[i] = s
+				clock += s.length
+			}
+		}
+	}
+
+	return clientRefs, nil
+}
+
 /*
 * Encode State As Update
  */
