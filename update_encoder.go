@@ -3,6 +3,7 @@ package ynotgo
 import "bufio"
 
 type DsEncoder interface {
+	Writer() *bufio.Writer
 	ToUint8Array() ([]byte, error)
 	ResetDsCurVal() error
 	WriteDsClock(num uint32) error
@@ -11,7 +12,6 @@ type DsEncoder interface {
 
 type UpdateEncoder interface {
 	DsEncoder
-	Writer() *bufio.Writer
 	WriteLeftId(id *ID) error
 	WriteRightId(id *ID) error
 	WriteClient(client uint32) error
