@@ -14,7 +14,11 @@ type DsDecoderV1 struct {
 }
 
 func newDsDecoderV1() *DsDecoderV1 {
-	return &DsDecoderV1{}
+	buf := bytes.NewBuffer(nil)
+	return &DsDecoderV1{
+		buf:    buf,
+		reader: bufio.NewReader(buf),
+	}
 }
 
 func NewDsDecoderV1() *DsDecoderV1 {
