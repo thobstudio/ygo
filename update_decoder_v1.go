@@ -25,7 +25,19 @@ func NewDsDecoderV1() *DsDecoderV1 {
 	return newDsDecoderV1()
 }
 
-//
+func (d *DsDecoderV1) ResetDsCurVal() error {
+	return nil // This is a noop in v1
+}
+
+func (d *DsDecoderV1) ReadDsClock() (uint32, error) {
+	return lib0.ReadVarUint(d.reader)
+}
+
+func (d *DsDecoderV1) ReadDsLen() (uint32, error) {
+	return lib0.ReadVarUint(d.reader)
+}
+
+/*---------------------------------------------------------------------*/
 
 type UpdateDecoderV1 struct {
 	DsDecoderV1
@@ -43,18 +55,6 @@ func newUpdatDecoderV1() *UpdateDecoderV1 {
 
 func NewUpdatDecoderV1() *UpdateDecoderV1 {
 	return newUpdatDecoderV1()
-}
-
-func (d *UpdateDecoderV1) ResetDsCurVal() error {
-	return nil // This is a noop in v1
-}
-
-func (d *UpdateDecoderV1) ReadDsClock() (uint32, error) {
-	return lib0.ReadVarUint(d.reader)
-}
-
-func (d *UpdateDecoderV1) ReadDsLen() (uint32, error) {
-	return lib0.ReadVarUint(d.reader)
 }
 
 func (d *UpdateDecoderV1) Reader() *bufio.Reader {
