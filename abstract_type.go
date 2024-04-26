@@ -8,6 +8,12 @@ type AbstractType struct {
 	itemMap map[string]*Item
 }
 
+func newAbstractType() *AbstractType {
+	return &AbstractType{
+		itemMap: make(map[string]*Item),
+	}
+}
+
 func (at *AbstractType) Doc() *Doc {
 	return at.doc
 }
