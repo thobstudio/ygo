@@ -1,10 +1,16 @@
 package ynotgo
 
 import (
+	"bufio"
+	"bytes"
+	"cmp"
+	"io"
 	"math/rand"
+	"slices"
 
 	"github.com/google/uuid"
 	"github.com/olebedev/emitter"
+	"github.com/thobstudio/ynotgo/lib0"
 )
 
 func generateNewClientId() uint32 {
@@ -128,3 +134,102 @@ func (doc *Doc) Transact(handler TransactionHandler, origin any, local bool) (an
 
 	return result, err
 }
+
+/*
+* Encode State As Update
+ */
+
+func (doc *Doc) encodeStateAsUpdate(encoder UpdateEncoder, encodedTargetStateVector []byte) error {
+	targetStateVector, err := readStateVector(bufio.NewReader(bytes.NewBuffer(encodedTargetStateVector)))
+	if err != nil {
+		return err
+	}
+
+	if err := doc.store.WriteClientStructs(encoder, targetStateVector); err != nil {
+		return err
+	}
+
+	if err := doc.store.WriteDeleteSet(encoder); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (doc *Doc) EncodeStateAsUpdateV1(encodedTargetStateVector []byte) ([]byte, error) {
+	encoder := NewUpdateEncoderV1()
+	if err := doc.encodeStateAsUpdate(encoder, encodedTargetStateVector); err != nil {
+		return []byte{}, err
+	}
+	return encoder.ToUint8Array()
+}
+
+/*
+* Encoder State Vector
+ */
+
+func readStateVector(reader *bufio.Reader) (map[uint32]uint32, error) {
+	sslength, err := lib0.ReadVarUint(reader)
+	if err != nil {
+		if err == io.EOF {
+			return make(map[uint32]uint32, 0), nil
+		}
+		return nil, err
+	}
+	stateVector := make(map[uint32]uint32, sslength)
+	for i := 0; i < int(sslength); i++ {
+		client, err := lib0.ReadVarUint(reader)
+		if err != nil {
+			return nil, err
+		}
+		clock, err := lib0.ReadVarUint(reader)
+		if err != nil {
+			return nil, err
+		}
+		stateVector[client] = clock
+	}
+	return stateVector, nil
+}
+
+func (doc *Doc) writeStateVector(encoder DsEncoder, sv StateVector) error {
+	if err := lib0.WriteVarUint(encoder.Writer(), uint32(len(sv))); err != nil {
+		return err
+	}
+
+	clients := make([]uint32, len(sv))
+	i := 0
+	for client := range sv {
+		clients[i] = client
+		i++
+	}
+	slices.SortFunc(clients, func(a, b uint32) int {
+		return cmp.Compare(b, a)
+	})
+
+	for _, client := range clients {
+		if err := lib0.WriteVarUint(encoder.Writer(), client); err != nil {
+			return err
+		}
+		if err := lib0.WriteVarUint(encoder.Writer(), sv[client]); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (doc *Doc) encodeStateVector(dsencoder DsEncoder) ([]byte, error) {
+	sv := doc.store.StateVector()
+
+	if err := doc.writeStateVector(dsencoder, sv); err != nil {
+		return nil, err
+	}
+
+	return dsencoder.ToUint8Array()
+}
+
+func (doc *Doc) EncodeStateVectorV1() ([]byte, error) {
+	dsencoder := newDsEncoderV1()
+	return doc.encodeStateVector(dsencoder)
+}
+
