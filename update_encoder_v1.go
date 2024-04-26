@@ -13,6 +13,44 @@ type DsEncoderV1 struct {
 	writer *bufio.Writer
 }
 
+func newDsEncoderV1() *DsEncoderV1 {
+	buf := bytes.NewBuffer(nil)
+	return &DsEncoderV1{
+		buf:    buf,
+		writer: bufio.NewWriter(buf),
+	}
+}
+
+func NewDsEncoderV1() *DsEncoderV1 {
+	return newDsEncoderV1()
+}
+
+func (e DsEncoderV1) ResetDsCurVal() error {
+	// This is noop in v1
+	return nil
+}
+
+func (e DsEncoderV1) WriteDsClock(num uint32) error {
+	return lib0.WriteVarUint(e.writer, num)
+}
+
+func (e DsEncoderV1) WriteDsLen(num uint32) error {
+	return lib0.WriteVarUint(e.writer, num)
+}
+
+func (e DsEncoderV1) ToUint8Array() ([]byte, error) {
+	if err := e.writer.Flush(); err != nil {
+		return nil, err
+	}
+	return e.buf.Bytes(), nil
+}
+
+func (e DsEncoderV1) Writer() *bufio.Writer {
+	return e.writer
+}
+
+/*--------------------------------------------------------------------------*/
+
 type UpdateEncoderV1 struct {
 	DsEncoderV1
 }
@@ -31,28 +69,11 @@ func NewUpdateEncoderV1() *UpdateEncoderV1 {
 	return newUpdateEncoderV1()
 }
 
-func (e UpdateEncoderV1) ResetDsCurVal() error {
-	// This is noop in v1
-	return nil
-}
-
-func (e UpdateEncoderV1) WriteDsClock(num uint32) error {
-	return lib0.WriteVarUint(e.writer, num)
-}
-
-func (e UpdateEncoderV1) WriteDsLen(num uint32) error {
-	return lib0.WriteVarUint(e.writer, num)
-}
-
 func (e UpdateEncoderV1) ToUint8Array() ([]byte, error) {
 	if err := e.writer.Flush(); err != nil {
 		return nil, err
 	}
 	return e.buf.Bytes(), nil
-}
-
-func (e UpdateEncoderV1) Writer() *bufio.Writer {
-	return e.writer
 }
 
 func (e UpdateEncoderV1) WriteLeftId(id *ID) error {
