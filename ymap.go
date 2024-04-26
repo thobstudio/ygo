@@ -121,11 +121,6 @@ func (m *YMap) SetStart(start *Item) {
 	m.start = start
 }
 
-func (m *YMap) Integrate(doc *Doc, item *Item) {
-	m.doc = doc
-	m.item = item
-}
-
 func (m *YMap) ToJSON() any {
 	jsonmap := make(map[string]any)
 	for key, item := range m.itemMap {
