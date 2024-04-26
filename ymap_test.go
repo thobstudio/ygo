@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDocSetExistingMapValue(t *testing.T) {
+func TestYMapSetExistingValue(t *testing.T) {
 	doc := newDoc()
 
 	p := doc.GetMap("project")
