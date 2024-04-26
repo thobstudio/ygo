@@ -40,13 +40,14 @@ func (content *ContentType) Integrate(tx *Transaction, item *Item) {
 	content.contentType.Integrate(tx.doc, item)
 }
 
-// TODO: Need to implement this
-func (content *ContentType) Delete(tx *Transaction) {}
+func (content *ContentType) Delete(tx *Transaction) {
+	panic("not implemented")
+}
 
-// TODO: Need to implement this
-func (content *ContentType) Gc(store *StructStore) {}
+func (content *ContentType) Gc(store *StructStore) {
+	panic("not implemented")
+}
 
-// TODO: Implement this once we have taken care of encoder
 func (content *ContentType) Write(encoder UpdateEncoder, offset uint32) error {
 	return content.contentType.Write(encoder)
 }
