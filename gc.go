@@ -46,3 +46,7 @@ func (item *Gc) Deleted() bool {
 func (item *Gc) Write(encoder UpdateEncoder, offset uint32) error {
 	return nil
 }
+
+func (item *Gc) GetMissing(tx *Transaction, store *StructStore) (uint32, bool) {
+	return 0, false
+}

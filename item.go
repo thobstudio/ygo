@@ -272,6 +272,63 @@ func (item *Item) SetKeep(doKeep bool) {
 	}
 }
 
+func (item *Item) GetMissing(tx *Transaction, store *StructStore) (uint32, bool) {
+	if item.leftOrigin != nil && item.leftOrigin.client != item.id.client && item.leftOrigin.clock >= store.State(item.leftOrigin.client) {
+		return item.leftOrigin.client, true
+	}
+	if item.rightOrigin != nil && item.rightOrigin.client != item.id.client && item.rightOrigin.clock >= store.State(item.rightOrigin.client) {
+		return item.rightOrigin.client, true
+	}
+
+	if item.parent != nil {
+		parentId, ok := item.parent.(*ID)
+		if ok && item.id.client != parentId.client && parentId.clock >= store.State(parentId.client) {
+			return parentId.client, true
+		}
+	}
+
+	if item.leftOrigin != nil {
+		// FIXME: Not sure if ignoring this error is right thing to do, but lets go ahead with it right now
+		t, _ := store.GetItemCleanEnd(tx, item.leftOrigin)
+		item.left = t.(*Item)
+		item.leftOrigin = item.left.LastId()
+	}
+
+	if item.rightOrigin != nil {
+		// FIXME: Not sure if ignoring this error is right thing to do, but lets go ahead with it right now
+		t, _ := store.GetItemCleanEnd(tx, item.rightOrigin)
+		item.right = t.(*Item)
+		item.rightOrigin = item.right.LastId()
+	}
+
+	if item.left != nil && reflect.TypeOf(item.left) == reflect.TypeOf(&Gc{}) || item.right != nil && reflect.TypeOf(item.right) == reflect.TypeOf(&Gc{}) {
+		item.parent = nil
+	} else if item.parent == nil {
+		if item.left != nil && reflect.TypeOf(item.left) == reflect.TypeOf(&Item{}) {
+			item.parent = item.left.parent
+			item.parentSub = item.left.parentSub
+		}
+		if item.right != nil && reflect.TypeOf(item.right) == reflect.TypeOf(&Item{}) {
+			item.parent = item.right.parent
+			item.parentSub = item.right.parentSub
+		}
+	} else if reflect.TypeOf(item.parent) == reflect.TypeOf(&ID{}) {
+		// FIXME: Not sure if ignoring this error is right thing to do, but lets go ahead with it right now
+		parentItem, _ := store.GetItem(item.parent.(*ID))
+		if reflect.TypeOf(parentItem) == reflect.TypeOf(&Gc{}) {
+			item.parent = nil
+		} else {
+			parentItemItem, ok := parentItem.(*Item)
+			if ok {
+				// FIXME: This might panic so probably should handle it
+				item.parent = parentItemItem.content.(*ContentType).contentType
+			}
+		}
+	}
+
+	return 0, false
+}
+
 func (item *Item) Write(encoder UpdateEncoder, offset uint32) error {
 	leftOrigin := item.leftOrigin
 	if offset > 0 {
