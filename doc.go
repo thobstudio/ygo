@@ -233,3 +233,19 @@ func (doc *Doc) EncodeStateVectorV1() ([]byte, error) {
 	return doc.encodeStateVector(dsencoder)
 }
 
+/*
+* Apply Update
+ */
+
+func (doc *Doc) applyUpdate(decoder UpdateDecoder, txOrigin any) error {
+	panic("not implemented")
+}
+
+func (doc *Doc) ApplyUpdateV1(update []byte, txOrigin any) error {
+	decoder := newUpdateDecoderV1(update)
+	return doc.applyUpdate(decoder, txOrigin)
+}
+
+func (doc *Doc) ApplyUpdateV2(update []byte, txOrigin any) error {
+	panic("not implemented")
+}
