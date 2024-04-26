@@ -323,3 +323,162 @@ func (store *StructStore) CreateDeleteSet() (*DeleteSet, error) {
 	}
 	return ds, nil
 }
+
+type ClientStructRef struct {
+	i    uint32
+	refs []SharedStruct
+}
+
+func (store *StructStore) integrateStructs(clientsStructsRefs map[uint32]*ClientStructRef, tx *Transaction) (*PendingStructs, error) {
+	if len(clientsStructsRefs) == 0 {
+		return nil, nil
+	}
+	clientRefIds := make([]uint32, len(clientsStructsRefs))
+	i := 0
+	for client := range clientsStructsRefs {
+		clientRefIds[i] = client
+		i++
+	}
+	// Sort descending
+	slices.SortFunc(clientRefIds, func(a, b uint32) int {
+		return cmp.Compare(b, a)
+	})
+
+	stack := make([]SharedStruct, 0)
+
+	getNextStructTarget := func() *ClientStructRef {
+		if len(clientRefIds) == 0 {
+			return nil
+		}
+		nextStructsTarget := clientsStructsRefs[clientRefIds[len(clientRefIds)-1]]
+		for uint32(len(nextStructsTarget.refs)) == nextStructsTarget.i {
+			// pop id
+			clientRefIds = clientRefIds[1:]
+			if len(clientRefIds) > 0 {
+				nextStructsTarget = clientsStructsRefs[clientRefIds[len(clientRefIds)-1]]
+			} else {
+				return nil
+			}
+		}
+
+		return nextStructsTarget
+	}
+
+	curStructsTarget := getNextStructTarget()
+	if curStructsTarget == nil {
+		return nil, nil
+	}
+
+	restStructs := newStructStore()
+	missingSv := make(map[uint32]uint32)
+	//
+	updateMissingSv := func(client, clock uint32) {
+		mclock, ok := missingSv[client]
+		if !ok || mclock > clock {
+			missingSv[client] = clock
+		}
+	}
+
+	addStackToRestSS := func() {
+		for _, item := range stack {
+			client := item.Id().client
+			if unapplicableItems, ok := clientsStructsRefs[client]; ok {
+				unapplicableItems.i--
+				restStructs.clients[client] = unapplicableItems.refs[unapplicableItems.i:]
+				delete(clientsStructsRefs, client)
+				unapplicableItems.i = 0
+				unapplicableItems.refs = []SharedStruct{}
+			} else {
+				restStructs.SetStructs(client, []SharedStruct{item})
+			}
+
+			filteredClientRefIds := make([]uint32, len(clientRefIds))
+			i := 0
+			for _, id := range clientRefIds {
+				if id != client {
+					filteredClientRefIds[i] = client
+					i++
+				}
+			}
+			clientRefIds = filteredClientRefIds[:i]
+		}
+		stack = []SharedStruct{}
+	}
+
+	stackHead := curStructsTarget.refs[curStructsTarget.i]
+	curStructsTarget.i++
+	state := make(map[uint32]uint32)
+
+	for {
+		if reflect.TypeOf(stackHead) != reflect.TypeOf(&Skip{}) {
+			shclient := stackHead.Id().client
+			localClock, ok := state[shclient]
+			if !ok {
+				localClock = store.State(shclient)
+				state[shclient] = localClock
+			}
+			offset := localClock - stackHead.Id().clock
+			if offset < 0 {
+				stack = append(stack, stackHead)
+				updateMissingSv(stackHead.Id().client, stackHead.Id().clock-1)
+				addStackToRestSS()
+				//
+			} else {
+				if missing, ok := stackHead.GetMissing(tx, store); ok {
+					stack = append(stack, stackHead)
+
+					structRefs, ok := clientsStructsRefs[missing]
+					if ok {
+						updateMissingSv(missing, store.State(missing))
+						addStackToRestSS()
+					} else {
+						stackHead = structRefs.refs[structRefs.i]
+						structRefs.i++
+						continue
+					}
+					//
+				} else if offset == 0 || offset < stackHead.Length() {
+					stackHead.Integrate(tx, offset)
+					// Cache the stack head
+					state[stackHead.Id().client] = stackHead.Id().clock + stackHead.Length()
+				}
+				//
+			}
+		}
+
+		// Iterate to next stack head
+		if len(stack) > 0 {
+			stackHead = stack[0]
+			stack = stack[1:]
+		} else if curStructsTarget != nil && curStructsTarget.i < uint32(len(curStructsTarget.refs)) {
+			stackHead = curStructsTarget.refs[curStructsTarget.i]
+			curStructsTarget.i++
+		} else {
+			curStructsTarget = getNextStructTarget()
+			if curStructsTarget == nil {
+				break
+			} else {
+				stackHead = curStructsTarget.refs[curStructsTarget.i]
+				curStructsTarget.i++
+			}
+		}
+	}
+
+	if restStructs.ClientsCount() > 0 {
+		encoder := newUpdateEncoderV1()
+		err := restStructs.WriteClientStructs(encoder, make(map[uint32]uint32))
+		if err != nil {
+			return nil, err
+		}
+		update, err := encoder.ToUint8Array()
+		if err != nil {
+			return nil, err
+		}
+		return &PendingStructs{
+			missing: missingSv,
+			update:  update,
+		}, nil
+	}
+
+	return nil, nil
+}
