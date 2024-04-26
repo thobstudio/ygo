@@ -1,6 +1,8 @@
 package ynotgo
 
-import "errors"
+import (
+	"errors"
+)
 
 type ContentAny struct {
 	arr []any
@@ -68,4 +70,21 @@ func (content *ContentAny) Write(encoder UpdateEncoder, offset uint32) error {
 
 func (content *ContentAny) Ref() uint8 {
 	return 8
+}
+
+func readContentAny(decoder UpdateDecoder) (*ContentAny, error) {
+	length, err := decoder.ReadLen()
+	if err != nil {
+		return nil, err
+	}
+	cs := make([]any, length)
+	for i := 0; i < int(length); i++ {
+		a, err := decoder.ReadAny()
+		if err != nil {
+			return nil, err
+		}
+		cs = append(cs, a)
+	}
+
+	return newContentAny(cs), nil
 }
