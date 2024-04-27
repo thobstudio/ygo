@@ -51,6 +51,16 @@ func (at *AbstractType) Integrate(doc *Doc, item *Item) {
 	at.item = item
 }
 
+func (m *AbstractType) ClearItemMap() {
+	m.itemMap = make(map[string]*Item)
+}
+
+func (m *AbstractType) ForEachItem(callback func(item *Item, key string)) {
+	for key, item := range m.itemMap {
+		callback(item, key)
+	}
+}
+
 func (at *AbstractType) Copy() SharedType {
 	return &AbstractType{}
 }

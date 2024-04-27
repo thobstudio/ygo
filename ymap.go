@@ -82,14 +82,6 @@ func (m *YMap) Clear() {
 	}
 }
 
-func (m *YMap) GetItem(key string) *Item {
-	return m.itemMap[key]
-}
-
-func (m *YMap) SetItem(key string, item *Item) {
-	m.itemMap[key] = item
-}
-
 func (m *YMap) Clone() SharedType {
 	nm := newYMap()
 	for key, item := range m.itemMap {

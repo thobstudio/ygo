@@ -9,6 +9,8 @@ type SharedType interface {
 	SetLength(length uint32)
 	GetItem(key string) *Item
 	SetItem(key string, item *Item)
+	ForEachItem(func(item *Item, key string))
+	ClearItemMap()
 	Integrate(doc *Doc, item *Item)
 	Copy() SharedType
 	Clone() SharedType
