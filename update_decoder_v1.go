@@ -13,16 +13,20 @@ type DsDecoderV1 struct {
 	reader *bufio.Reader
 }
 
-func newDsDecoderV1() *DsDecoderV1 {
-	buf := bytes.NewBuffer(nil)
+func newDsDecoderV1(update []byte) *DsDecoderV1 {
+	buf := bytes.NewBuffer(update)
 	return &DsDecoderV1{
 		buf:    buf,
 		reader: bufio.NewReader(buf),
 	}
 }
 
-func NewDsDecoderV1() *DsDecoderV1 {
-	return newDsDecoderV1()
+func NewDsDecoderV1(update []byte) *DsDecoderV1 {
+	return newDsDecoderV1(update)
+}
+
+func (d *DsDecoderV1) Reader() *bufio.Reader {
+	return d.reader
 }
 
 func (d *DsDecoderV1) ResetDsCurVal() error {
@@ -44,21 +48,13 @@ type UpdateDecoderV1 struct {
 }
 
 func newUpdateDecoderV1(update []byte) *UpdateDecoderV1 {
-	buf := bytes.NewBuffer(update)
 	return &UpdateDecoderV1{
-		DsDecoderV1: DsDecoderV1{
-			buf:    buf,
-			reader: bufio.NewReader(buf),
-		},
+		DsDecoderV1: *newDsDecoderV1(update),
 	}
 }
 
 func NewUpdateDecoderV1(update []byte) *UpdateDecoderV1 {
 	return newUpdateDecoderV1(update)
-}
-
-func (d *UpdateDecoderV1) Reader() *bufio.Reader {
-	return d.reader
 }
 
 func (d *UpdateDecoderV1) ReadLeftId() (*ID, error) {

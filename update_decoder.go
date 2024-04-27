@@ -3,6 +3,7 @@ package ynotgo
 import "bufio"
 
 type DsDecoder interface {
+	Reader() *bufio.Reader
 	ResetDsCurVal() error
 	ReadDsClock() (uint32, error)
 	ReadDsLen() (uint32, error)
@@ -10,7 +11,6 @@ type DsDecoder interface {
 
 type UpdateDecoder interface {
 	DsDecoder
-	Reader() *bufio.Reader
 	ReadLeftId() (*ID, error)
 	ReadRightId() (*ID, error)
 	ReadClient() (uint32, error)
