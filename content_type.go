@@ -45,7 +45,19 @@ func (content *ContentType) Delete(tx *Transaction) {
 }
 
 func (content *ContentType) Gc(store *StructStore) {
-	panic("not implemented")
+	item := content.contentType.Start()
+	for item != nil {
+		item.Gc(store, true)
+		item = item.right
+	}
+	content.contentType.SetStart(nil)
+	content.contentType.ForEachItem(func(item *Item) {
+		for item != nil {
+			item.Gc(store, true)
+			item = item.left
+		}
+	})
+	content.contentType.ClearItemMap()
 }
 
 func (content *ContentType) Write(encoder UpdateEncoder, offset uint32) error {
