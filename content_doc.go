@@ -16,14 +16,14 @@ func newContentDoc(doc *Doc) *ContentDoc {
 		gc:      true,
 		autLoad: false,
 	}
-	if !doc.gc {
+	if !doc.opts.gc {
 		opts.gc = true
 	}
-	if doc.autoLoad {
+	if doc.opts.autoLoad {
 		opts.autLoad = true
 	}
-	if doc.meta != nil {
-		opts.meta = doc.meta
+	if doc.opts.meta != nil {
+		opts.meta = doc.opts.meta
 	}
 	return &ContentDoc{
 		doc:  doc,
@@ -45,8 +45,8 @@ func (content *ContentDoc) Countable() bool {
 
 func (content *ContentDoc) Copy() Content {
 	return &ContentDoc{
-		doc: newDoc(
-			WithGuid(content.doc.guid),
+		doc: newDocWithOptions(
+			WithGuid(content.doc.opts.guid),
 		),
 	}
 }
@@ -72,7 +72,7 @@ func (content *ContentDoc) Gc(store *StructStore) {}
 
 // TODO: Implement this once we have taken care of encoder
 func (content *ContentDoc) Write(encoder UpdateEncoder, offset uint32) error {
-	if err := encoder.WriteString(content.doc.guid); err != nil {
+	if err := encoder.WriteString(content.doc.opts.guid); err != nil {
 		return err
 	}
 	if err := encoder.WriteAny(content.opts); err != nil {

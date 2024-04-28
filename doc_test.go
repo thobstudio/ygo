@@ -11,18 +11,18 @@ import (
 func TestDocDefaultOptions(t *testing.T) {
 	doc := NewDoc()
 
-	assert.True(t, doc.gc)
-	assert.True(t, doc.shouldLoad)
-	assert.False(t, doc.autoLoad)
-	assert.NotEmpty(t, doc.guid)
-	assert.GreaterOrEqual(t, doc.clientId, uint32(0))
-	assert.Empty(t, doc.collectionId)
+	assert.True(t, doc.opts.gc)
+	assert.True(t, doc.opts.shouldLoad)
+	assert.False(t, doc.opts.autoLoad)
+	assert.NotEmpty(t, doc.opts.guid)
+	assert.GreaterOrEqual(t, doc.opts.clientId, uint32(0))
+	assert.Empty(t, doc.opts.collectionId)
 }
 
 func TestDocOptions(t *testing.T) {
 	guid := uuid.NewString()
 	clientId := rand.Uint32()
-	doc := NewDoc(
+	doc := NewDocWithOptions(
 		WithGuid(guid),
 		WithClientId(clientId),
 		WithAutoLoad(true),
@@ -31,12 +31,12 @@ func TestDocOptions(t *testing.T) {
 		WithGc(false),
 	)
 
-	assert.False(t, doc.gc)
-	assert.False(t, doc.shouldLoad)
-	assert.True(t, doc.autoLoad)
-	assert.Equal(t, doc.guid, guid)
-	assert.Equal(t, doc.clientId, clientId)
-	assert.Equal(t, doc.collectionId, "dummy")
+	assert.False(t, doc.opts.gc)
+	assert.False(t, doc.opts.shouldLoad)
+	assert.True(t, doc.opts.autoLoad)
+	assert.Equal(t, doc.opts.guid, guid)
+	assert.Equal(t, doc.opts.clientId, clientId)
+	assert.Equal(t, doc.opts.collectionId, "dummy")
 }
 
 func TestDocGetMap(t *testing.T) {

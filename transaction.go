@@ -67,7 +67,7 @@ func cleanupTransactions(transactionCleanups []*Transaction, index int) error {
 			action()
 		}
 
-		if doc.gc {
+		if doc.opts.gc {
 			ds.TryGcDeleteSet(store, func(item *Item) bool { return true })
 		}
 
@@ -107,10 +107,10 @@ func cleanupTransactions(transactionCleanups []*Transaction, index int) error {
 		}
 
 		if !tx.local {
-			afterClock, afterOk := tx.afterState[doc.clientId]
-			beforeClock, beforeOk := tx.beforeState[doc.clientId]
+			afterClock, afterOk := tx.afterState[doc.opts.clientId]
+			beforeClock, beforeOk := tx.beforeState[doc.opts.clientId]
 			if afterOk && beforeOk && afterClock != beforeClock {
-				doc.clientId = generateNewClientId()
+				doc.opts.clientId = generateNewClientId()
 			}
 		}
 

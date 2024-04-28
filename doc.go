@@ -17,80 +17,100 @@ func generateNewClientId() uint32 {
 	return rand.Uint32()
 }
 
+type DocOptions struct {
+	gc           bool
+	guid         string
+	clientId     uint32
+	collectionId string
+	autoLoad     bool
+	shouldLoad   bool
+	meta         any
+}
+
+type Option func(*DocOptions)
+
+func newDocOptions(options ...Option) *DocOptions {
+	opts := &DocOptions{
+		autoLoad:   false,
+		shouldLoad: true,
+		gc:         true,
+		guid:       uuid.NewString(),
+		clientId:   generateNewClientId(),
+	}
+	for _, o := range options {
+		o(opts)
+	}
+
+	return opts
+}
+
 type Doc struct {
 	emitter.Emitter
-	gc                  bool
-	guid                string
-	clientId            uint32
-	collectionId        string
-	autoLoad            bool
-	shouldLoad          bool
+	opts                *DocOptions
 	share               map[string]SharedType
 	store               *StructStore
 	item                *Item
 	transaction         *Transaction
 	transactionCleanups []*Transaction
-	meta                any
 }
 
-type Option func(*Doc)
-
-func newDoc(options ...Option) *Doc {
+func newDocWithOptions(options ...Option) *Doc {
+	opts := newDocOptions(options...)
 	doc := &Doc{
-		autoLoad:            false,
-		shouldLoad:          true,
-		gc:                  true,
-		guid:                uuid.NewString(),
-		clientId:            generateNewClientId(),
+		opts:                opts,
 		share:               make(map[string]SharedType),
 		store:               newStructStore(),
 		transactionCleanups: make([]*Transaction, 0),
 	}
 	doc.Use("*", emitter.Void)
 
-	for _, o := range options {
-		o(doc)
-	}
-
 	return doc
 }
 
-func NewDoc(options ...Option) *Doc {
-	return newDoc(options...)
+func NewDocWithOptions(options ...Option) *Doc {
+	return newDocWithOptions(options...)
+}
+
+func newDoc() *Doc {
+	return newDocWithOptions()
+}
+
+func NewDoc() *Doc {
+	return newDoc()
 }
 
 func WithGc(gc bool) Option {
-	return func(doc *Doc) {
+	return func(doc *DocOptions) {
 		doc.gc = gc
 	}
 }
 
 func WithGuid(guid string) Option {
-	return func(doc *Doc) {
+	return func(doc *DocOptions) {
 		doc.guid = guid
 	}
 }
 
 func WithClientId(clientId uint32) Option {
-	return func(doc *Doc) {
+	return func(doc *DocOptions) {
 		doc.clientId = clientId
 	}
 }
 
 func WithCollectionId(collectionId string) Option {
-	return func(doc *Doc) {
+	return func(doc *DocOptions) {
 		doc.collectionId = collectionId
 	}
 }
 
 func WithAutoLoad(autoLoad bool) Option {
-	return func(doc *Doc) {
+	return func(doc *DocOptions) {
 		doc.autoLoad = autoLoad
 	}
 }
 
 func WithShouldLoad(shouldLoad bool) Option {
-	return func(doc *Doc) {
+	return func(doc *DocOptions) {
 		doc.shouldLoad = shouldLoad
 	}
 }

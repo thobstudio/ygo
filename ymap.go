@@ -115,7 +115,7 @@ func (m *YMap) ToJSON() any {
 func typeMapSet(m *YMap, key string, value any, tx *Transaction) error {
 	left := m.GetItem(key)
 	doc := tx.doc
-	ownClientId := doc.clientId
+	ownClientId := doc.opts.clientId
 	var content Content
 
 	if value == nil {
