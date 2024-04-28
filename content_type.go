@@ -51,7 +51,7 @@ func (content *ContentType) Gc(store *StructStore) {
 		item = item.right
 	}
 	content.contentType.SetStart(nil)
-	content.contentType.ForEachItem(func(item *Item) {
+	content.contentType.ForEachItem(func(item *Item, key string) {
 		for item != nil {
 			item.Gc(store, true)
 			item = item.left
