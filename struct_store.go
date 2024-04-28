@@ -75,12 +75,11 @@ func (store *StructStore) AddStructItem(item SharedStruct) error {
 		structs = make([]SharedStruct, 0)
 	} else {
 		lastStruct := structs[len(structs)-1]
-			return errors.New("AddStructItem unexpected case")
 		if lastStruct.State() != clock {
+			return errors.New("clock is not equal to state of the last struct item")
 		}
 	}
-	structs = append(structs, item)
-	store.clients[client] = structs
+	store.clients[client] = append(structs, item)
 	return nil
 }
 
@@ -106,14 +105,14 @@ func findIndexSS(structs []SharedStruct, clock uint32) (uint32, error) {
 		midindex = uint32(math.Floor(float64((left + right) / 2)))
 	}
 
-	return 0, errors.New("findIndexSS unexpected case")
+	return 0, errors.New(fmt.Sprintf("struct item with clock %v not found \n", clock))
 }
 
 func (store *StructStore) FindStructIndex(client uint32, clock uint32) (uint32, error) {
 	if structs, ok := store.clients[client]; ok {
 		return findIndexSS(structs, clock)
 	}
-	return 0, errors.New(fmt.Sprintf("FindStructIndex invalid %v client", client))
+	return 0, errors.New(fmt.Sprintf("no structs for client %v \n", client))
 }
 
 func (store *StructStore) GetItem(id *ID) (SharedStruct, error) {
@@ -124,7 +123,7 @@ func (store *StructStore) GetItem(id *ID) (SharedStruct, error) {
 		}
 		return structs[index], nil
 	}
-	return nil, errors.New(fmt.Sprintf("GetItem no items for client : %v \n", id.client))
+	return nil, errors.New(fmt.Sprintf("GetItem no structs for client : %v \n", id.client))
 }
 
 func (store *StructStore) ReplaceStruct(prev SharedStruct, next SharedStruct) error {
@@ -143,7 +142,7 @@ func (store *StructStore) ReplaceStruct(prev SharedStruct, next SharedStruct) er
 func (store *StructStore) GetItemCleanEnd(tx *Transaction, id *ID) (SharedStruct, error) {
 	structs, ok := store.clients[id.client]
 	if !ok {
-		return nil, errors.New("StructStore client not found")
+		return nil, errors.New(fmt.Sprintf("not structs for client %v \n", id.client))
 	}
 
 	index, err := findIndexSS(structs, id.clock)
