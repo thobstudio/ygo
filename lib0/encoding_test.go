@@ -3,7 +3,6 @@ package lib0
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -76,8 +75,7 @@ func TestEncodingStringArray(t *testing.T) {
 	WriteAny(writer, payload)
 	writer.Flush()
 
-	num, err := ReadAny(bufio.NewReader(buf))
-	fmt.Printf("this is the any : %v : %v \n", num, err)
+	num, _ := ReadAny(bufio.NewReader(buf))
 	assert.Equal(t, payload, num)
 }
 
@@ -90,7 +88,6 @@ func TestEncodingBoolMap(t *testing.T) {
 	WriteAny(writer, payload)
 	writer.Flush()
 
-	num, err := ReadAny(bufio.NewReader(buf))
-	fmt.Printf("this is the any : %v : %v \n", num, err)
+	num, _ := ReadAny(bufio.NewReader(buf))
 	assert.Equal(t, payload, num)
 }
