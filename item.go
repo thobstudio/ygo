@@ -8,8 +8,7 @@ import (
 )
 
 type Item struct {
-	id          *ID
-	length      uint32
+	*AbstractStruct
 	left        *Item
 	right       *Item
 	leftOrigin  *ID
@@ -35,16 +34,15 @@ func newItem(
 		info = lib0.Bit2
 	}
 	return &Item{
-		id:          id,
-		left:        left,
-		right:       right,
-		leftOrigin:  leftOrigin,
-		rightOrigin: rightOrigin,
-		parent:      parent,
-		parentSub:   parentSub,
-		content:     content,
-		info:        info,
-		length:      uint32(content.Length()),
+		AbstractStruct: newAbstractStruct(id, uint32(content.Length())),
+		left:           left,
+		right:          right,
+		leftOrigin:     leftOrigin,
+		rightOrigin:    rightOrigin,
+		parent:         parent,
+		parentSub:      parentSub,
+		content:        content,
+		info:           info,
 	}
 }
 

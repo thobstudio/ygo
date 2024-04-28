@@ -3,14 +3,12 @@ package ynotgo
 import "reflect"
 
 type Gc struct {
-	id     *ID
-	length uint32
+	*AbstractStruct
 }
 
 func newGc(id *ID, length uint32) *Gc {
 	return &Gc{
-		id:     id,
-		length: length,
+		AbstractStruct: newAbstractStruct(id, length),
 	}
 }
 
