@@ -484,3 +484,95 @@ func (store *StructStore) integrateStructs(clientsStructsRefs map[uint32]*Client
 
 	return nil, nil
 }
+
+func (store *StructStore) readAndApplyDeleteSet(decoder UpdateDecoder, tx *Transaction) ([]byte, error) {
+	unappliedDs := newDeleteSet()
+	reader := decoder.Reader()
+	numClients, err := lib0.ReadVarUint(reader)
+	if err != nil {
+		return nil, err
+	}
+	//
+	for i := 0; i < int(numClients); i++ {
+		decoder.ResetDsCurVal()
+		client, err := lib0.ReadVarUint(reader)
+		if err != nil {
+			return nil, errors.New("failed to read client from decoder")
+		}
+		numOfDeletes, err := lib0.ReadVarUint(reader)
+		if err != nil {
+			return nil, errors.New("failed to read number of deletes from decoder")
+		}
+		structs := store.GetStructs(client)
+		if structs == nil {
+			structs = make([]SharedStruct, 0)
+		}
+		state := store.State(client)
+
+		for i := 0; i < int(numOfDeletes); i++ {
+			clock, err := decoder.ReadDsClock()
+			if err != nil {
+				return nil, err
+			}
+			dsLength, err := decoder.ReadDsLen()
+			if err != nil {
+				return nil, err
+			}
+			clockEnd := clock + dsLength
+
+			if clock < state {
+				if state < clockEnd {
+					unappliedDs.AddDeleteItem(client, state, clockEnd-state)
+				}
+
+				index, err := findIndexSS(structs, clock)
+				if err != nil {
+					return nil, err
+				}
+
+				if structItem, ok := structs[index].(*Item); ok && !structItem.Deleted() && structItem.id.clock < clock {
+					structs = append(structs[:index+1], structs[index:]...)
+					structs[index] = structItem.SplitItem(tx, clock-structItem.id.clock)
+					index++
+				}
+
+				for int(index) < len(structs) {
+					if structItem, ok := structs[index].(*Item); ok {
+						index++
+						if structItem.id.clock < clockEnd {
+							if !structItem.Deleted() {
+								if clockEnd < structItem.State() {
+									structs = append(structs[:index+1], structs[index:]...)
+									structs[index] = structItem.SplitItem(tx, clock-structItem.id.clock)
+								}
+								structItem.Delete(tx)
+							}
+						} else {
+							break
+						}
+					}
+				}
+			} else {
+				unappliedDs.AddDeleteItem(client, clockEnd, clockEnd-clock)
+			}
+		}
+
+		if unappliedDs.ClientsCount() > 0 {
+			dsencoder := newUpdateEncoderV2()
+			if err := lib0.WriteVarUint(dsencoder.writer, 0); err != nil {
+				return nil, errors.New("failed to write structs length")
+			}
+			if err := unappliedDs.Write(dsencoder); err != nil {
+				return nil, err
+			}
+			update, err := dsencoder.ToUint8Array()
+			if err != nil {
+				return nil, errors.New("failed to encode unapplied delete set")
+			}
+
+			return update, nil
+		}
+	}
+
+	return nil, nil
+}
