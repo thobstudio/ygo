@@ -9,7 +9,7 @@ import (
 func TestYMapSetExistingValue(t *testing.T) {
 	doc := newDoc()
 
-	p := doc.GetMap("project")
+	p, _ := doc.GetMap("project")
 	p.Set("boolean", true)
 	b := p.Get("boolean")
 	assert.True(t, b.(bool))
