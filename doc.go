@@ -95,6 +95,18 @@ func WithShouldLoad(shouldLoad bool) Option {
 	}
 }
 
+func (doc *Doc) Get(name string) SharedType {
+	if m, ok := doc.share[name].(SharedType); ok {
+		return m
+	}
+
+	t := newAbstractType()
+	t.Integrate(doc, nil)
+	doc.share[name] = t
+
+	return t
+}
+
 func (doc *Doc) GetMap(name string) *YMap {
 	if m, ok := doc.share[name].(*YMap); ok {
 		return m
