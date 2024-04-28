@@ -4,7 +4,7 @@ import "errors"
 
 type YMap struct {
 	AbstractType
-	prelimContent map[string]interface{}
+	prelimContent map[string]any
 }
 
 func newYMap() *YMap {
@@ -28,7 +28,7 @@ func (m *YMap) Has(key string) bool {
 	return false
 }
 
-func (m *YMap) Get(key string) interface{} {
+func (m *YMap) Get(key string) any {
 	if val, ok := m.itemMap[key]; ok {
 		if val != nil && !val.Deleted() {
 			return val.content.Content()[val.length-1]
