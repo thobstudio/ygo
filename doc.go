@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"cmp"
+	"errors"
+	"fmt"
 	"io"
 	"slices"
 
@@ -58,16 +60,41 @@ func (doc *Doc) Get(name string) SharedType {
 	return t
 }
 
-func (doc *Doc) GetMap(name string) *YMap {
-	if m, ok := doc.share[name].(*YMap); ok {
-		return m
+func (doc *Doc) GetMap(name string) (*YMap, error) {
+	var t *YMap
+	val, ok := doc.share[name]
+
+	if ok {
+		if m, ok := val.(*YMap); ok {
+			t = m
+		} else if at, ok := val.(*AbstractType); ok {
+			t = newYMap()
+			t.length = at.length
+			t.itemMap = at.itemMap
+			t.ForEachItem(func(item *Item, key string) {
+				n := item
+				for n != nil {
+					n.parent = t
+					n = n.left
+				}
+			})
+			t.start = at.start
+			n := t.start
+
+			for n != nil {
+				n.parent = t
+				n = n.right
+			}
+		} else {
+			return nil, errors.New(fmt.Sprintf("type with name %s has already been defined with a different struct", name))
+		}
+	} else {
+		t = newYMap()
 	}
 
-	m := newYMap()
-	m.Integrate(doc, nil)
-	doc.share[name] = m
-
-	return m
+	doc.share[name] = t
+	t.Integrate(doc, nil)
+	return t, nil
 }
 
 func (doc *Doc) Transact(handler TransactionHandler, origin any, local bool) (any, error) {
