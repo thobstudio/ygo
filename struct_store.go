@@ -38,7 +38,10 @@ func (store *StructStore) GetStructItem(client uint32, index int) SharedStruct {
 }
 
 func (store *StructStore) GetStructs(client uint32) []SharedStruct {
-	return store.clients[client]
+	if structs, ok := store.clients[client]; ok {
+		return structs
+	}
+	return nil
 }
 
 func (store *StructStore) SetStructs(client uint32, structs []SharedStruct) {
