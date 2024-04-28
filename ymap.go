@@ -3,15 +3,13 @@ package ynotgo
 import "errors"
 
 type YMap struct {
-	AbstractType
+	*AbstractType
 	prelimContent map[string]any
 }
 
 func newYMap() *YMap {
 	return &YMap{
-		AbstractType: AbstractType{
-			itemMap: make(map[string]*Item),
-		},
+		AbstractType: newAbstractType(),
 	}
 }
 
