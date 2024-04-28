@@ -52,16 +52,12 @@ func (e DsEncoderV1) Writer() *bufio.Writer {
 /*--------------------------------------------------------------------------*/
 
 type UpdateEncoderV1 struct {
-	DsEncoderV1
+	*DsEncoderV1
 }
 
 func newUpdateEncoderV1() *UpdateEncoderV1 {
-	buf := bytes.NewBuffer(nil)
 	return &UpdateEncoderV1{
-		DsEncoderV1: DsEncoderV1{
-			buf:    buf,
-			writer: bufio.NewWriter(buf),
-		},
+		DsEncoderV1: newDsEncoderV1(),
 	}
 }
 
