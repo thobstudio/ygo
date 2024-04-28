@@ -52,7 +52,7 @@ func (store *StructStore) ClientsCount() int {
 func (store *StructStore) State(client uint32) uint32 {
 	if structs, ok := store.clients[client]; ok {
 		lastStruct := structs[len(structs)-1]
-		return lastStruct.Id().clock + lastStruct.Length()
+		return lastStruct.State()
 	}
 	return 0
 }
@@ -61,7 +61,7 @@ func (store *StructStore) StateVector() StateVector {
 	sm := make(StateVector, len(store.clients))
 	for client, structs := range store.clients {
 		structItem := structs[len(structs)-1]
-		sm[client] = structItem.Id().clock + structItem.Length()
+		sm[client] = structItem.State()
 	}
 
 	return sm
@@ -75,8 +75,8 @@ func (store *StructStore) AddStructItem(item SharedStruct) error {
 		structs = make([]SharedStruct, 0)
 	} else {
 		lastStruct := structs[len(structs)-1]
-		if lastStruct.Id().clock+lastStruct.Length() != clock {
 			return errors.New("AddStructItem unexpected case")
+		if lastStruct.State() != clock {
 		}
 	}
 	structs = append(structs, item)
@@ -92,11 +92,11 @@ func findIndexSS(structs []SharedStruct, clock uint32) (uint32, error) {
 		return right, nil
 	}
 
-	midindex := uint32(math.Floor(float64((clock / (mid.Id().clock + mid.Length() - 1)) * right)))
+	midindex := uint32(math.Floor(float64((clock / (mid.State() - 1)) * right)))
 	for left <= right {
 		mid = structs[midindex]
 		if mid.Id().clock <= clock {
-			if clock < mid.Id().clock+mid.Length() {
+			if clock < mid.State() {
 				return midindex, nil
 			}
 			left = midindex + 1
@@ -153,7 +153,7 @@ func (store *StructStore) GetItemCleanEnd(tx *Transaction, id *ID) (SharedStruct
 
 	str := structs[index]
 
-	if id.clock != str.Id().clock+str.Length()-1 && reflect.TypeOf(str) != reflect.TypeOf(&Gc{}) {
+	if id.clock != str.State()-1 && reflect.TypeOf(str) != reflect.TypeOf(&Gc{}) {
 		store.InsertStruct(id.client, index+1, str.(*Item).SplitItem(tx, id.clock-str.Id().clock+1))
 	}
 
@@ -440,7 +440,7 @@ func (store *StructStore) integrateStructs(clientsStructsRefs map[uint32]*Client
 				} else if offset == 0 || offset < stackHead.Length() {
 					stackHead.Integrate(tx, offset)
 					// Cache the stack head
-					state[stackHead.Id().client] = stackHead.Id().clock + stackHead.Length()
+					state[stackHead.Id().client] = stackHead.State()
 				}
 				//
 			}
