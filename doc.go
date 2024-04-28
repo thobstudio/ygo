@@ -334,7 +334,79 @@ func (doc *Doc) EncodeStateVectorV1() ([]byte, error) {
  */
 
 func (doc *Doc) applyUpdate(decoder UpdateDecoder, txOrigin any) error {
-	panic("not implemented")
+	_, err := doc.Transact(func(tx *Transaction) (any, error) {
+		retry := false
+		ss, err := doc.readClientsStructRefs(decoder)
+		if err != nil {
+			return nil, err
+		}
+		restStructs, err := doc.store.integrateStructs(ss, tx)
+		if err != nil {
+			return nil, err
+		}
+		pending := doc.store.pendingStructs
+		if pending != nil {
+			for client, clock := range pending.missing {
+				if clock < doc.store.State(client) {
+					retry = true
+					break
+				}
+			}
+
+			if restStructs != nil {
+				for client, clock := range restStructs.missing {
+					if mclock, ok := pending.missing[client]; ok && mclock > clock {
+						pending.missing[client] = clock
+					}
+				}
+				update, err := mergeUpdatesV2([][]byte{pending.update, restStructs.update})
+				if err != nil {
+					return nil, err
+				}
+				pending.update = update
+			}
+		} else {
+			doc.store.pendingStructs = restStructs
+		}
+
+		dsRest, err := doc.store.readAndApplyDeleteSet(decoder, tx)
+		if err != nil {
+			return nil, err
+		}
+		if doc.store.pendingDs != nil {
+			pendingDsDecoder := newUpdateDecoderV2(doc.store.pendingDs)
+			lib0.ReadVarUint(pendingDsDecoder.Reader())
+			dsRest2, err := doc.store.readAndApplyDeleteSet(pendingDsDecoder, tx)
+			if err != nil {
+				return nil, err
+			}
+			if dsRest != nil && dsRest2 != nil {
+				mergedUpdates, err := mergeUpdatesV2([][]byte{dsRest, dsRest2})
+				if err != nil {
+					return nil, err
+				}
+				doc.store.pendingDs = mergedUpdates
+			} else {
+				if dsRest != nil {
+					doc.store.pendingDs = dsRest
+				} else {
+					doc.store.pendingDs = dsRest2
+				}
+			}
+		} else {
+			doc.store.pendingDs = dsRest
+		}
+
+		if retry {
+			update := doc.store.pendingStructs.update
+			doc.store.pendingStructs = nil
+			if err := doc.ApplyUpdateV2(update, txOrigin); err != nil {
+				return nil, err
+			}
+		}
+		return nil, nil
+	}, txOrigin, false)
+	return err
 }
 
 func (doc *Doc) ApplyUpdateV1(update []byte, txOrigin any) error {
