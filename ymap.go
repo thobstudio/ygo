@@ -2,8 +2,6 @@ package ynotgo
 
 import "errors"
 
-const YMapRefID = 1
-
 type YMap struct {
 	AbstractType
 	prelimContent map[string]interface{}
