@@ -42,7 +42,28 @@ func TestDocOptions(t *testing.T) {
 func TestDocGetMap(t *testing.T) {
 	doc := newDoc()
 
-	p := doc.GetMap("project")
+	p, _ := doc.GetMap("project")
 	assert.Equal(t, doc.share["project"], p)
 	assert.Equal(t, p.doc, doc)
+}
+
+func TestDocEncodeDecode(t *testing.T) {
+	doc1 := newDoc()
+	doc2 := newDoc()
+
+	p, _ := doc1.GetMap("project")
+	p.Set("name", "ynotgo")
+	p.Set("version", "0.0.1")
+
+	update, err := doc1.EncodeStateAsUpdateV1([]byte{})
+	assert.Nil(t, err)
+	err = doc2.ApplyUpdateV1(update, nil)
+	assert.Nil(t, err)
+
+	p2, _ := doc2.GetMap("project")
+	name := p2.Get("name")
+	version := p2.Get("version")
+
+	assert.Equal(t, name, "ynotgo")
+	assert.Equal(t, version, "0.0.1")
 }
