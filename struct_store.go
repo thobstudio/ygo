@@ -303,7 +303,8 @@ func (store *StructStore) WriteDeleteSet(encoder UpdateEncoder) error {
 func (store *StructStore) CreateDeleteSet() (*DeleteSet, error) {
 	ds := newDeleteSet()
 	for client, structs := range store.clients {
-		dsItems := make([]*DeleteItem, 0)
+		dsItems := make([]*DeleteItem, len(structs))
+		dsItemsLength := 0
 		for i := 0; i < len(structs); i++ {
 			_struct := structs[i]
 			if _struct.Deleted() {
@@ -315,12 +316,13 @@ func (store *StructStore) CreateDeleteSet() (*DeleteSet, error) {
 						length += next.Length()
 					}
 				}
-				dsItems = append(dsItems, newDeleteItem(clock, length))
+				dsItems[dsItemsLength] = newDeleteItem(clock, length)
+				dsItemsLength++
 			}
 		}
 
 		if len(dsItems) > 0 {
-			ds.clients[client] = dsItems
+			ds.clients[client] = dsItems[:dsItemsLength]
 		}
 	}
 	return ds, nil
