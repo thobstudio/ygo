@@ -2,9 +2,10 @@ package ynotgo
 
 import (
 	"cmp"
-	"encoding/binary"
 	"math"
 	"slices"
+
+	"github.com/thobstudio/ynotgo/lib0"
 )
 
 type DeleteItem struct {
@@ -145,35 +146,33 @@ func (ds *DeleteSet) TryMergeDeleteSet(store *StructStore) error {
 }
 
 func (ds *DeleteSet) Write(encoder UpdateEncoder) error {
-	var err error
-	if err = binary.Write(encoder.Writer(), binary.LittleEndian, uint64(len(ds.clients))); err != nil {
+	if err := lib0.WriteVarUint(encoder.Writer(), uint32(ds.ClientsCount())); err != nil {
 		return err
 	}
+
 	clients := make([]uint32, len(ds.clients))
 	i := 0
 	for client := range ds.clients {
 		clients[i] = client
 		i++
 	}
-
-	slices.SortFunc(clients, func(a, b uint32) int {
-		return cmp.Compare(b, a)
-	})
-
+	slices.Sort(clients)
 	for _, client := range clients {
 		dsItems := ds.clients[client]
 		encoder.ResetDsCurVal()
-		if err = binary.Write(encoder.Writer(), binary.LittleEndian, client); err != nil {
+		if err := lib0.WriteVarUint(encoder.Writer(), client); err != nil {
 			return err
 		}
-		if err = binary.Write(encoder.Writer(), binary.LittleEndian, len(dsItems)); err != nil {
+		length := len(dsItems)
+		if err := lib0.WriteVarUint(encoder.Writer(), uint32(length)); err != nil {
 			return err
 		}
-		for _, di := range dsItems {
-			if err = encoder.WriteDsClock(di.clock); err != nil {
+		for i := 0; i < length; i++ {
+			item := dsItems[i]
+			if err := encoder.WriteDsClock(item.clock); err != nil {
 				return err
 			}
-			if err = encoder.WriteDsLen(di.length); err != nil {
+			if err := encoder.WriteDsLen(item.length); err != nil {
 				return err
 			}
 		}
