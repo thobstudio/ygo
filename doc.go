@@ -6,7 +6,6 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
-	"io"
 	"slices"
 
 	"github.com/olebedev/emitter"
@@ -235,57 +234,70 @@ func (doc *Doc) readClientsStructRefs(decoder UpdateDecoder) (map[uint32]*Client
 * Encode State As Update
  */
 
-func (doc *Doc) encodeStateAsUpdate(encoder UpdateEncoder, encodedTargetStateVector []byte) error {
-	targetStateVector, err := readStateVector(bufio.NewReader(bytes.NewBuffer(encodedTargetStateVector)))
-	if err != nil {
-		return err
-	}
-
+func (doc *Doc) writeAsUpdate(encoder UpdateEncoder, targetStateVector map[uint32]uint32) error {
 	if err := doc.store.WriteClientStructs(encoder, targetStateVector); err != nil {
 		return err
 	}
 
-	if err := doc.store.WriteDeleteSet(encoder); err != nil {
+	ds, err := doc.store.CreateDeleteSet()
+	if err != nil {
+		return err
+	}
+
+	if err := ds.Write(encoder); err != nil {
 		return err
 	}
 
 	return nil
 }
 
+func (doc *Doc) encodeStateAsUpdate(encoder UpdateEncoder, encodedTargetStateVector []byte) ([]byte, error) {
+	updates := make([][]byte, 3)
+	targetStateVector, err := readStateVector(bufio.NewReader(bytes.NewBuffer(encodedTargetStateVector)))
+	if err != nil {
+		return nil, err
+	}
+	if err := doc.writeAsUpdate(encoder, targetStateVector); err != nil {
+		return nil, err
+	}
+
+	update, err := encoder.ToUint8Array()
+	if err != nil {
+		return nil, err
+	}
+	updates[0] = update
+
+	if doc.store.pendingDs != nil {
+		updates[1] = doc.store.pendingDs
+	}
+
+	if doc.store.pendingStructs != nil {
+		diffUpdate, err := diffUpdateV2(doc.store.pendingStructs.update, encodedTargetStateVector)
+		if err != nil {
+			return nil, err
+		}
+		updates[2] = diffUpdate
+	}
+
+	if len(updates) > 1 {
+		if _, ok := encoder.(*UpdateEncoderV1); ok {
+			return mergeUpdates(updates)
+		} else {
+			return mergeUpdatesV2(updates)
+		}
+	}
+
+	return updates[0], nil
+}
+
 func (doc *Doc) EncodeStateAsUpdateV1(encodedTargetStateVector []byte) ([]byte, error) {
 	encoder := NewUpdateEncoderV1()
-	if err := doc.encodeStateAsUpdate(encoder, encodedTargetStateVector); err != nil {
-		return []byte{}, err
-	}
-	return encoder.ToUint8Array()
+	return doc.encodeStateAsUpdate(encoder, encodedTargetStateVector)
 }
 
 /*
 * Encoder State Vector
  */
-
-func readStateVector(reader *bufio.Reader) (map[uint32]uint32, error) {
-	sslength, err := lib0.ReadVarUint(reader)
-	if err != nil {
-		if err == io.EOF {
-			return make(map[uint32]uint32, 0), nil
-		}
-		return nil, err
-	}
-	stateVector := make(map[uint32]uint32, sslength)
-	for i := 0; i < int(sslength); i++ {
-		client, err := lib0.ReadVarUint(reader)
-		if err != nil {
-			return nil, err
-		}
-		clock, err := lib0.ReadVarUint(reader)
-		if err != nil {
-			return nil, err
-		}
-		stateVector[client] = clock
-	}
-	return stateVector, nil
-}
 
 func (doc *Doc) writeStateVector(encoder DsEncoder, sv StateVector) error {
 	if err := lib0.WriteVarUint(encoder.Writer(), uint32(len(sv))); err != nil {
