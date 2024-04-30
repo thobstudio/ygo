@@ -2,6 +2,7 @@ package ynotgo
 
 import (
 	"cmp"
+	"errors"
 	"math"
 	"slices"
 
@@ -181,16 +182,44 @@ func (ds *DeleteSet) Write(encoder UpdateEncoder) error {
 	return nil
 }
 
-func (ds *DeleteSet) ForEach(iteratee func(client uint32, items []*DeleteItem)) {
-	clients := make([]uint32, len(ds.clients))
-	i := 0
-	for c := range ds.clients {
-		clients[i] = c
-		i++
+func ReadDeleteSet(decoder DsDecoder) (*DeleteSet, error) {
+	ds := newDeleteSet()
+	reader := decoder.Reader()
+	numClients, err := lib0.ReadVarUint(reader)
+	if err != nil {
+		return nil, err
 	}
-	slices.Sort(clients)
+	for i := 0; i < int(numClients); i++ {
+		decoder.ResetDsCurVal()
+		client, err := lib0.ReadVarUint(reader)
+		if err != nil {
+			return nil, errors.New("failed to read client")
+		}
+		numOfDeletes, err := lib0.ReadVarUint(reader)
+		if err != nil {
+			return nil, errors.New("failed to read number of deletes")
+		}
+		if numOfDeletes > 0 {
+			dsField, ok := ds.clients[client]
+			if !ok {
+				dsField = make([]*DeleteItem, 0)
+			}
+			for j := 0; j < int(numOfDeletes); j++ {
+				dsClock, err := lib0.ReadVarUint(reader)
+				if err != nil {
+					return nil, errors.New("failed to delete set clock")
+				}
+				dsLength, err := lib0.ReadVarUint(reader)
+				if err != nil {
+					return nil, errors.New("failed to read delete set length")
+				}
+				// FIXME: instead of append we could probably grow the slice and then just assign value
+				// that way it becomes more performant
+				dsField = append(dsField, newDeleteItem(dsClock, dsLength))
+			}
+			ds.clients[client] = dsField
+		}
+	}
 
-	for _, client := range clients {
-		iteratee(client, ds.clients[client])
-	}
+	return ds, nil
 }
