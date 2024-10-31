@@ -74,5 +74,5 @@ func (at *AbstractType) ToJSON() any {
 }
 
 func (at *AbstractType) Write(encoder UpdateEncoder) error {
-	panic("to be implemented by parent structs")
+	panic("to be implemented by composed structs")
 }
