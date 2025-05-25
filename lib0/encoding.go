@@ -8,7 +8,7 @@ import (
 	"reflect"
 )
 
-func WriteVarUint(writer *bufio.Writer, x uint32) error {
+func WriteVarUint(writer *bufio.Writer, x uint) error {
 	for x >= 0x80 {
 		if err := writer.WriteByte(byte(x) | 0x80); err != nil {
 			return err
@@ -55,7 +55,7 @@ func WriteVarint(writer *bufio.Writer, x int32) error {
 
 func WriteUint8Array(writer *bufio.Writer, buf []byte) error {
 	length := len(buf)
-	if err := WriteVarUint(writer, uint32(length)); err != nil {
+	if err := WriteVarUint(writer, uint(length)); err != nil {
 		return err
 	}
 	_, err := writer.Write(buf)
@@ -64,7 +64,7 @@ func WriteUint8Array(writer *bufio.Writer, buf []byte) error {
 
 func WriteVarString(writer *bufio.Writer, s string) error {
 	length := len(s)
-	if err := WriteVarUint(writer, uint32(length)); err != nil {
+	if err := WriteVarUint(writer, uint(length)); err != nil {
 		return err
 	}
 	_, err := writer.Write([]byte(s))
@@ -167,7 +167,7 @@ func WriteAny(writer *bufio.Writer, o any) error {
 		if err := writer.WriteByte(118); err != nil {
 			return err
 		}
-		if err := WriteVarUint(writer, uint32(len(t))); err != nil {
+		if err := WriteVarUint(writer, uint(len(t))); err != nil {
 			return err
 		}
 		for key, value := range t {
@@ -183,7 +183,7 @@ func WriteAny(writer *bufio.Writer, o any) error {
 		if err := writer.WriteByte(117); err != nil {
 			return err
 		}
-		if err := WriteVarUint(writer, uint32(len(t))); err != nil {
+		if err := WriteVarUint(writer, uint(len(t))); err != nil {
 			return err
 		}
 		for _, item := range t {

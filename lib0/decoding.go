@@ -8,43 +8,43 @@ import (
 	"io"
 )
 
-func ReadVarUint(reader *bufio.Reader) (uint32, error) {
+func ReadVarUint(reader *bufio.Reader) (uint, error) {
 	u, err := binary.ReadUvarint(reader)
 	if err != nil {
 		return 0, err
 	}
-	return uint32(u), nil
+	return uint(u), nil
 }
 
-func ReadVarInt(reader *bufio.Reader) (int32, error) {
+func ReadVarInt(reader *bufio.Reader) (int, error) {
 	r, err := reader.ReadByte()
 	if err != nil {
 		return 0, err
 	}
-	num := uint32(r) & Bits6
-	mult := uint32(64)
-	var sign int32 = 1
+	num := uint(r) & Bits6
+	mult := uint(64)
+	var sign int = 1
 	if r&byte(Bit7) > 0 {
 		sign = -1
 	}
 	if r&byte(Bit8) == 0 {
-		return sign * int32(num), nil
+		return sign * int(num), nil
 	}
 
 	for {
 		r, err := reader.ReadByte()
 		if err == io.EOF {
-			return sign * int32(num), nil
+			return sign * int(num), nil
 		}
 		if err != nil {
 			return 0, nil
 		}
 
-		num = num + uint32(r&byte(Bits7))*mult
+		num = num + uint(r&byte(Bits7))*mult
 		mult *= 128
 
 		if r < byte(Bit8) {
-			return sign * int32(num), nil
+			return sign * int(num), nil
 		}
 	}
 }
